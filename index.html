@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oberon's Secret Stash</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'stash-bg': '#0f0f15',
+                        'stash-card': 'rgba(40, 40, 60, 0.15)',
+                        'stash-primary': '#8a2be2',
+                        'stash-secondary': '#00f2ff',
+                        'stash-accent': '#ff2a6d',
+                        'stash-border': 'rgba(255, 255, 255, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="antialiased">
+
+    <!-- Background Layer -->
+    <div id="dynamic-bg-layer">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <!-- Main Site View -->
+    <div id="home-view">
+        <!-- Navigation -->
+        <nav class="glass-panel glass-nav fixed w-full top-0 z-50">
+            <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="ph-fill ph-vault text-3xl text-stash-primary"></i>
+                    <span class="text-xl font-black tracking-widest text-white drop-shadow-lg">OBERON'S<span class="text-stash-secondary"> STASH</span></span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <div class="pt-32 pb-16 min-h-[50vh] flex flex-col items-center justify-center relative px-6">
+            <h1 class="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-stash-primary via-stash-secondary to-stash-accent mb-6 text-center tracking-tight drop-shadow-2xl">
+                WELCOME TO <br /> OBERON'S SECRET STASH
+            </h1>
+            <p class="text-center max-w-2xl text-gray-300">Your collection of games, google docs, and websites</p>
+        </div>
+
+        <!-- Combined Transparent Bar -->
+        <div class="sticky top-[73px] z-40 bg-stash-bg/40 backdrop-blur-2xl border-b border-stash-border">
+            <!-- Tab Navigation -->
+            <div class="py-4">
+                <div class="max-w-3xl mx-auto px-6 flex justify-center gap-4">
+                    <button class="tab-button active" onclick="showTab('games', event)">Jack's AI Games</button>
+                    <button class="tab-button" onclick="showTab('docs', event)">Google Docs</button>
+                    <button class="tab-button" onclick="showTab('websites', event)">Websites</button>
+                </div>
+            </div>
+            
+            <!-- Search Section -->
+            <div class="py-4">
+                <div class="max-w-3xl mx-auto px-6 relative">
+                    <i class="ph ph-magnifying-glass absolute left-10 top-1/2 -translate-y-1/2 text-stash-primary text-xl"></i>
+                    <input type="text" id="search-input" placeholder="Search the stash..." class="search-input w-full py-4 pl-14 pr-6 rounded-2xl text-lg font-medium">
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Sections -->
+        <div class="max-w-7xl mx-auto px-6 pb-40">
+            <div id="games-tab" class="tab-content active">
+                <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    <a href="AI GAMES/AI GAMES/2048.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/oh6BQ7x1T3f97H3sFLsiMQKdUtnjq_t4qjgCltIOc8U/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9wbGF5/LWxoLmdvb2dsZXVz/ZXJjb250ZW50LmNv/bS9iWnJlZ0NlRXB6/TXdSb29jTG5zWWI0/VGUtdlBQSGtXMWs1/SDF4c1EzcUs5eUUw/MGZpeHBXdTVmTnNV/ejN1dDJJaURIbj13/MjQwLWg0ODAtcnc" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">2048</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/2048 V2.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/oh6BQ7x1T3f97H3sFLsiMQKdUtnjq_t4qjgCltIOc8U/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9wbGF5/LWxoLmdvb2dsZXVz/ZXJjb250ZW50LmNv/bS9iWnJlZ0NlRXB6/TXdSb29jTG5zWWI0/VGUtdlBQSGtXMWs1/SDF4c1EzcUs5eUUw/MGZpeHBXdTVmTnNV/ejN1dDJJaURIbj13/MjQwLWg0ODAtcnc" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">2048 V2</h3>
+                            <p class="text-sm text-stash-secondary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/2048 V3.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/oh6BQ7x1T3f97H3sFLsiMQKdUtnjq_t4qjgCltIOc8U/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9wbGF5/LWxoLmdvb2dsZXVz/ZXJjb250ZW50LmNv/bS9iWnJlZ0NlRXB6/TXdSb29jTG5zWWI0/VGUtdlBQSGtXMWs1/SDF4c1EzcUs5eUUw/MGZpeHBXdTVmTnNV/ejN1dDJJaURIbj13/MjQwLWg0ODAtcnc" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">2048 V3</h3>
+                            <p class="text-sm text-stash-accent font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/Atari Breakout.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/OOdLoZuwd_mG8Z9qzfbQGEMAnnljUue9KkAf237QElI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzLzAxL2I4/L2E3LzAxYjhhNzU5/N2M1YzBkOTY0MmFi/ZTljNTcxZWZiYjVm/LmpwZw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Atari Breakout</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/Atari Breakout V2.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/OOdLoZuwd_mG8Z9qzfbQGEMAnnljUue9KkAf237QElI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzLzAxL2I4/L2E3LzAxYjhhNzU5/N2M1YzBkOTY0MmFi/ZTljNTcxZWZiYjVm/LmpwZw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Atari Breakout V2</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/block blast.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/zDuXGg5Mmir7sXbZuSqla_yIjAZwMhQDUKvQTL6KbYo/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMuZGl2eGxhbmQu/b3JnL3dwLWNvbnRl/bnQvdXBsb2Fkcy8y/MDI1LzAzL2Jsb2Nr/LWJsYXN0LXRodW1i/bmFpbC0xNTB4MTUw/LnBuZy53ZWJw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Block Blast</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/block blast V2.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/zDuXGg5Mmir7sXbZuSqla_yIjAZwMhQDUKvQTL6KbYo/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMuZGl2eGxhbmQu/b3JnL3dwLWNvbnRl/bnQvdXBsb2Fkcy8y/MDI1LzAzL2Jsb2Nr/LWJsYXN0LXRodW1i/bmFpbC0xNTB4MTUw/LnBuZy53ZWJw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Block Blast V2</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/Chess.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/FQojskK9WVSAfPANH57ZDz5nBcrYSFxgmutgoqr8MwE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTM5/MDgzMTIwMi92ZWN0/b3IvY2hlc3Mta25p/Z2h0LXZlY3Rvci1p/Y29uLmpwZz9zPTYx/Mng2MTImdz0wJms9/MjAmYz1wWFVvbm5B/aG9HdTAxdGVrWEhP/akk3NFZQOUprM2Z5/eWU1QzlyQzlZUHk4/PQ" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Chess</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/connect 4.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/DZrm5FEXD5WZy_QF5XEvMZMfPM8qFwch6ZhIsPl4S_c/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4w/Lmljb25maW5kZXIu/Y29tL2RhdGEvaWNv/bnMvYm9hcmQtZ2Ft/ZXMtY29sb3JlZC0x/LzQ4L0dhbWVzX0Jv/YXJkR2FtZXNfQXJ0/Ym9hcmRfMjgtNTEy/LnBuZw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Connect 4</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/flappy bird.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/8HhhpQyJIUEH8yyRyCdRH_yJyLjGP42BVfBPJkUzHsw/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93YWxs/cGFwZXJjYXZlLmNv/bS93cC93cDY5NTY5/OTYuanBn" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Flappy Bird</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/flappy bird V2.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/8HhhpQyJIUEH8yyRyCdRH_yJyLjGP42BVfBPJkUzHsw/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93YWxs/cGFwZXJjYXZlLmNv/bS93cC93cDY5NTY5/OTYuanBn" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Flappy Bird V2</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/MC-clone.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/2PjT8pSWg0GRK1x91DMCr5XCVifuqsskRzXVVD_Hc4k/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jbGlw/YXJ0LWxpYnJhcnku/Y29tL25ld19nYWxs/ZXJ5LzEyNzE4M19t/aW5lY3JhZnQtYmxv/Y2stcG5nLnBuZw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Minecraft Clone</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/MC clone V2.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/2PjT8pSWg0GRK1x91DMCr5XCVifuqsskRzXVVD_Hc4k/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jbGlw/YXJ0LWxpYnJhcnku/Y29tL25ld19nYWxs/ZXJ5LzEyNzE4M19t/aW5lY3JhZnQtYmxv/Y2stcG5nLnBuZw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Minecraft Clone V2</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/MC clone V3.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/2PjT8pSWg0GRK1x91DMCr5XCVifuqsskRzXVVD_Hc4k/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jbGlw/YXJ0LWxpYnJhcnku/Y29tL25ld19nYWxs/ZXJ5LzEyNzE4M19t/aW5lY3JhZnQtYmxv/Y2stcG5nLnBuZw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Minecraft Clone V3</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/MC clone V4.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/2PjT8pSWg0GRK1x91DMCr5XCVifuqsskRzXVVD_Hc4k/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jbGlw/YXJ0LWxpYnJhcnku/Y29tL25ld19nYWxs/ZXJ5LzEyNzE4M19t/aW5lY3JhZnQtYmxv/Y2stcG5nLnBuZw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Minecraft Clone V4</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/MC clone V5.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/2PjT8pSWg0GRK1x91DMCr5XCVifuqsskRzXVVD_Hc4k/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jbGlw/YXJ0LWxpYnJhcnku/Y29tL25ld19nYWxs/ZXJ5LzEyNzE4M19t/aW5lY3JhZnQtYmxv/Y2stcG5nLnBuZw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Minecraft Clone V5</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/MC Clone V5.1.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/2PjT8pSWg0GRK1x91DMCr5XCVifuqsskRzXVVD_Hc4k/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jbGlw/YXJ0LWxpYnJhcnku/Y29tL25ld19nYWxs/ZXJ5LzEyNzE4M19t/aW5lY3JhZnQtYmxv/Y2stcG5nLnBuZw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Minecraft Clone V5.1</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/Minesweeper.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/LPzyg5G3Cf1n1pjRLxWGuSro1TIQDw7fmftsP13hKZk/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4u/ZHJpYmJibGUuY29t/L3VzZXJ1cGxvYWQv/MTMzNjU0OTEvZmls/ZS9vcmlnaW5hbC03/ZGU4N2VjNWNiYTM1/MjJmYmVmNDQxYTAw/ZTIyOWZiYS5wbmc_/Zm9ybWF0PXdlYnAm/cmVzaXplPTQwMHgz/MDAmdmVydGljYWw9/Y2VudGVy" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Minesweeper</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/pacman.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/ff4hTsTt3F7bSuLpcIxjsPqiHZiNwH62Wwiv3Dgzftw/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/c3ByaXRlcnMtcmVz/b3VyY2UuY29tL21l/ZGlhL2dhbWVfaWNv/bnMvMi8xMzQxLnBu/Zz91cGRhdGVkPTE3/NTU0NzIwNzE" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Pacman</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/pong.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/ZCyznTL8Cn1-sdgJljO9ig8tAjsR3mgCpqbs8oBYHPU/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4u/aWNvbnNjb3V0LmNv/bS9pY29uL3ByZW1p/dW0vcG5nLTI1Ni10/aHVtYi90YWJsZS10/ZW5uaXMtMTE0NDYx/ODAtOTI1OTU3OC5w/bmc_Zj13ZWJwJnc9/MTI4" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Pacman</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/powdersim.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/AL-VvBtDO32sVbbpB6GPnjFWSMhYLzeWTgZ_JKGM3Nc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/aWNvbnM4LmNvbS9k/dXNrLzEyMDAvdm9s/Y2Fuby5qcGc" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Powder Sim</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/snake.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/aiEykjvWPc12--I_RGm2JG2Q-_qi7TNH3Qf9i4bqLUo/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wNTcv/OTg5LzQ3MS9zbWFs/bC9hLXNuYWtlLWlj/b24tb24tYS13aGl0/ZS1iYWNrZ3JvdW5k/LXZlY3Rvci5qcGc" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Snake</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/Snake V2.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/aiEykjvWPc12--I_RGm2JG2Q-_qi7TNH3Qf9i4bqLUo/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudmVjdGVlenku/Y29tL3N5c3RlbS9y/ZXNvdXJjZXMvdGh1/bWJuYWlscy8wNTcv/OTg5LzQ3MS9zbWFs/bC9hLXNuYWtlLWlj/b24tb24tYS13aGl0/ZS1iYWNrZ3JvdW5k/LXZlY3Rvci5qcGc" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Snake V2</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/Tetris.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/kuSO2HkHXJs1D4ecwsIBiCetqeEHzSgbpculFBLyBoI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly91cGxv/YWQud2lraW1lZGlh/Lm9yZy93aWtpcGVk/aWEvZW4vdGh1bWIv/Ny83ZC9UZXRyaXNf/TkVTX2NvdmVyX2Fy/dC5qcGcvMjUwcHgt/VGV0cmlzX05FU19j/b3Zlcl9hcnQuanBn" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Tetris</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/Tetris V2.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/kuSO2HkHXJs1D4ecwsIBiCetqeEHzSgbpculFBLyBoI/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly91cGxv/YWQud2lraW1lZGlh/Lm9yZy93aWtpcGVk/aWEvZW4vdGh1bWIv/Ny83ZC9UZXRyaXNf/TkVTX2NvdmVyX2Fy/dC5qcGcvMjUwcHgt/VGV0cmlzX05FU19j/b3Zlcl9hcnQuanBn" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Tetris V2</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="AI GAMES/AI GAMES/tic-tac-toe.html" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/FRRGB9wfzKN_XGXEEYEZnZrV5in7vM7o4R23k9zMoDE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/aWNvbnM4LmNvbS9l/eHRlcm5hbC1wcmV0/dHljb25zLXNvbGlk/LXByZXR0eWNvbnMv/MTIwMC9leHRlcm5h/bC10aWMtdGFjLXRv/ZS1nYW1lcy1wcmV0/dHljb25zLXNvbGlk/LXByZXR0eWNvbnMu/anBn" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Tic Tac Toe</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Launch Game</span>
+                                <i class="ph-bold ph-play-circle ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div id="docs-tab" class="tab-content" style="display: none;">
+                <div id="docs-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    <a href="https://docs.google.com/document/d/1_FmH3BlSBQI7FGgAQL59-ZPe8eCxs35wel6JUyVaG8Q/preview?pru=AAABmqeeRrg*1huWSZi3JCX-L3g4BYNIWA&tab=t.6sa070k0tqr7" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/gt4awcrt2jSkV_BCpXd-W4UesjheW67UJTCtt6Kp1BE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4t/aWNvbnMtcG5nLmZs/YXRpY29uLmNvbS81/MTIvNTk2OC81OTY4/NTE3LnBuZw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Ultimate Game Stash</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Open Document</span>
+                                <i class="ph-bold ph-file-text ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="https://docs.google.com/document/d/1cVqqHMDFcC4uLF5hQ-hGNZ4iF3vFfHZacgX--VwVhYg/edit?tab=t.9r01t36307vy" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="https://imgs.search.brave.com/gt4awcrt2jSkV_BCpXd-W4UesjheW67UJTCtt6Kp1BE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4t/aWNvbnMtcG5nLmZs/YXRpY29uLmNvbS81/MTIvNTk2OC81OTY4/NTE3LnBuZw" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Oberon's Secret Stash</h3>
+                            <p class="text-sm text-stash-secondary font-medium flex items-center gap-1 mt-auto">
+                                <span>Open Document</span>
+                                <i class="ph-bold ph-file-text ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div id="websites-tab" class="tab-content" style="display: none;">
+                <div id="websites-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    <a href="https://burgerking.burgermap.org/" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="images/image.png" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">FyreX link</h3>
+                            <p class="text-sm text-stash-accent font-medium flex items-center gap-1 mt-auto">
+                                <span>Visit Site</span>
+                                <i class="ph-bold ph-globe-hemisphere-west ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="https://mcdonalds.burgermap.org" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="images/image.png" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Website 2</h3>
+                            <p class="text-sm text-stash-primary font-medium flex items-center gap-1 mt-auto">
+                                <span>Visit Site</span>
+                                <i class="ph-bold ph-globe-hemisphere-west ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="https://mikeyjust.farted.net" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="images/image.png" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Website 3</h3>
+                            <p class="text-sm text-stash-secondary font-medium flex items-center gap-1 mt-auto">
+                                <span>Visit Site</span>
+                                <i class="ph-bold ph-globe-hemisphere-west ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="https://l4s4hr.csb.app/" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="img/image.png" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Jack's AI Launcher</h3>
+                            <p class="text-sm text-stash-secondary font-medium flex items-center gap-1 mt-auto">
+                                <span>Visit Site</span>
+                                <i class="ph-bold ph-globe-hemisphere-west ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                    <a href="https://oscarsgoofy.site" target="_blank" class="stash-card group">
+                        <div class="stash-img-container">
+                            <img src="UGS/image.png" class="object-cover" loading="lazy">
+                        </div>
+                        <div class="stash-content">
+                            <h3 class="text-lg font-bold text-white mb-1 truncate">Oscar's Goofy Site</h3>
+                            <p class="text-sm text-stash-secondary font-medium flex items-center gap-1 mt-auto">
+                                <span>Visit Site</span>
+                                <i class="ph-bold ph-globe-hemisphere-west ml-1"></i>
+                            </p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName, event) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-tab').style.display = 'block';
+            
+            // Add active class to clicked button
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
+        }
+
+        // Search functionality
+        document.getElementById('search-input').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.stash-card');
+            
+            cards.forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
