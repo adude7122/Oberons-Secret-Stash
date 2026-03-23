@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniBlock: Event Edition</title>
+    <style>
+        /* --- THEME VARIABLES --- */
+        :root {
+            --bg-color: #f0f2f5;
+            --panel-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #ccc;
+            --slot-bg: rgba(0,0,0,0.05);
+            /* Block Colors */
+            --b-event: #FFBF00; /* Yellow for events */
+            --b-motion: #4C97FF; /* Blue for movement */
+            --b-look: #9966FF; /* Purple for looks */
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --panel-bg: #1e1e1e;
+                --text-color: #e0e0e0;
+                --border-color: #444;
+                --slot-bg: rgba(255,255,255,0.1);
+            }
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        /* --- LAYOUT --- */
+        #palette {
+            width: 260px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            user-select: none;
+        }
+
+        #workspace {
+            flex: 1;
+            padding: 20px;
+            position: relative;
+            overflow: auto;
+        }
+
+        #stage-wrapper {
+            width: 400px;
+            background: var(--panel-bg);
+            border-left: 1px solid var(--border-color);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- BLOCKS & INDENTATION --- */
+        .block {
+            padding: 8px 12px;
+            border-radius: 4px;
+            color: white;
+            cursor: grab;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        /* Container Blocks (Events) */
+        .block.container {
+            padding-bottom: 5px;
+            background-color: var(--b-event);
+        }
+
+        /* The "Mouth" (Slot) for indentation */
+        .slot {
+            min-height: 40px;
+            margin-top: 5px;
+            margin-left: 15px; /* Visual Indentation */
+            padding: 5px;
+            background: var(--slot-bg);
+            border-radius: 4px;
+            border-top: 2px solid rgba(0,0,0,0.1);
+            border-left: 2px solid rgba(0,0,0,0.1);
+        }
+
+        .block.motion { background-color: var(--b-motion); }
+        .block.looks { background-color: var(--b-look); }
+
+        .block input, .block select {
+            border: none;
+            border-radius: 10px;
+            padding: 2px 5px;
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Dragging Visuals */
+        .dragging { opacity: 0.5; }
+        .drag-over { background-color: rgba(76, 175, 80, 0.2); border: 2px dashed #4CAF50; }
+
+        canvas {
+            background: white; 
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        @media (prefers-color-scheme: dark) { canvas { background: #2c2c2c; } }
+
+        .key-badge {
+            display: inline-block;
+            background: #333;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin: 0 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="palette">
+        <h3>Events (Controls)</h3>
+        <div class="block container" draggable="true" data-type="event-key">
+            <span>When </span>
+            <select class="key-select">
+                <option value="ArrowUp">Arrow Up</option>
+                <option value="ArrowDown">Arrow Down</option>
+                <option value="ArrowLeft">Arrow Left</option>
+                <option value="ArrowRight">Arrow Right</option>
+                <option value="w">W</option>
+                <option value="a">A</option>
+                <option value="s">S</option>
+                <option value="d">D</option>
+                <option value="q">Q (Action 1)</option>
+                <option value="e">E (Action 2)</option>
+            </select>
+            <span> Pressed</span>
+            <div class="slot"></div> </div>
+
+        <h3>Motion</h3>
+        <div class="block motion" draggable="true" data-type="move">
+            Move Steps <input type="number" value="10" style="width:40px">
+        </div>
+        <div class="block motion" draggable="true" data-type="rotate">
+            Rotate <input type="number" value="15" style="width:40px"> deg
+        </div>
+        
+        <h3>Looks</h3>
+        <div class="block looks" draggable="true" data-type="color">
+            Set Color <input type="color" value="#ff0000">
+        </div>
+        <div class="block looks" draggable="true" data-type="scale">
+            Change Size <input type="number" value="5" style="width:40px">
+        </div>
+    </div>
+
+    <div id="workspace" class="drop-zone">
+        </div>
+
+    <div id="stage-wrapper">
+        <canvas id="gameCanvas" width="380" height="300"></canvas>
+        <div style="margin-top:10px; text-align:center;">
+            <button onclick="resetGame()" style="padding:8px 16px; cursor:pointer;">↺ Reset Game</button>
+            <p style="font-size:0.8rem; opacity:0.7;">
+                Controls supported: <span class="key-badge">WASD</span> <span class="key-badge">Arrows</span> <span class="key-badge">Q</span> <span class="key-badge">E</span>
+            </p>
+            <p style="font-size:0.8rem; opacity:0.7;">
+                <strong>Tip:</strong> Drag Blue blocks INTO the gray slot of Yellow blocks.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. GAME ENGINE STATE ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let player = { x: 190, y: 150, angle: 0, color: '#ff0000', size: 20 };
+
+        function drawPlayer() {
+            // Clear
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(player.angle * Math.PI / 180);
+            
+            ctx.fillStyle = player.color;
+            ctx.fillRect(-player.size/2, -player.size/2, player.size, player.size);
+            
+            // Eyes/Direction
+            ctx.fillStyle = 'white';
+            ctx.fillRect(2, -5, 4, 4); 
+            ctx.fillRect(2, 1, 4, 4);
+            
+            ctx.restore();
+        }
+
+        function resetGame() {
+            player = { x: 190, y: 150, angle: 0, color: '#ff0000', size: 20 };
+            drawPlayer();
+        }
+
+        // --- 2. DRAG AND DROP (NESTED) ---
+        // We use a global variable to track what is being dragged
+        let draggedBlock = null;
+        let sourceContainer = null; // Palette or Workspace?
+
+        document.addEventListener('dragstart', e => {
+            if (!e.target.classList.contains('block')) return;
+            draggedBlock = e.target;
+            sourceContainer = e.target.parentElement;
+            e.target.classList.add('dragging');
+            e.stopPropagation(); // Don't drag parent if dragging child
+        });
+
+        document.addEventListener('dragend', e => {
+            if (draggedBlock) draggedBlock.classList.remove('dragging');
+            draggedBlock = null;
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        });
+
+        // Handle Drop Zones (Workspace AND Slots)
+        const dropZones = document.querySelectorAll('#workspace, .slot');
+
+        // We need a function to re-bind listeners because slots are created dynamically
+        function addDropListeners(element) {
+            element.addEventListener('dragover', e => {
+                e.preventDefault();
+                e.stopPropagation(); // Important: Stop drop from bubbling to parent slot
+                element.classList.add('drag-over');
+            });
+
+            element.addEventListener('dragleave', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                element.classList.remove('drag-over');
+            });
+
+            element.addEventListener('drop', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                element.classList.remove('drag-over');
+
+                if (!draggedBlock) return;
+
+                let blockToPlace;
+
+                // Case 1: Dragging from Palette (Clone it)
+                if (draggedBlock.closest('#palette')) {
+                    blockToPlace = draggedBlock.cloneNode(true);
+                    blockToPlace.classList.remove('dragging');
+                    
+                    // If it's a container, enable its slot
+                    const internalSlot = blockToPlace.querySelector('.slot');
+                    if (internalSlot) addDropListeners(internalSlot);
+                } 
+                // Case 2: Moving existing block
+                else {
+                    blockToPlace = draggedBlock;
+                }
+
+                // If dropping into a slot, check validity
+                // (Optional: Prevent dropping Event blocks inside other Event blocks)
+                if (element.classList.contains('slot') && blockToPlace.dataset.type === 'event-key') {
+                    return; // Prevent nesting events
+                }
+
+                element.appendChild(blockToPlace);
+                
+                // Double click to delete
+                blockToPlace.addEventListener('dblclick', (ev) => {
+                    ev.stopPropagation();
+                    blockToPlace.remove();
+                });
+            });
+        }
+
+        // Initialize Workspace
+        addDropListeners(document.getElementById('workspace'));
+
+
+        // --- 3. INPUT HANDLING (THE "COMPUTER") ---
+
+        document.addEventListener('keydown', (e) => {
+            // Find all "When Key Pressed" blocks in the workspace
+            const eventBlocks = document.getElementById('workspace').querySelectorAll('.block[data-type="event-key"]');
+            
+            eventBlocks.forEach(block => {
+                const select = block.querySelector('select');
+                const desiredKey = select.value;
+                
+                // Check matching keys
+                if (e.key === desiredKey || e.key.toLowerCase() === desiredKey) {
+                    // Prevent default scrolling for arrows/space
+                    if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault();
+                    
+                    // Run the code inside the slot
+                    const slot = block.querySelector('.slot');
+                    executeStack(slot);
+                }
+            });
+        });
+
+        function executeStack(slotElement) {
+            // Get all direct children blocks of the slot
+            // Note: In a real DOM, children might include text nodes, so we filter
+            const blocks = Array.from(slotElement.children).filter(el => el.classList.contains('block'));
+            
+            blocks.forEach(block => {
+                const type = block.dataset.type;
+                const inputs = block.querySelectorAll('input');
+
+                switch (type) {
+                    case 'move':
+                        const steps = parseFloat(inputs[0].value);
+                        const rad = player.angle * Math.PI / 180;
+                        player.x += Math.cos(rad) * steps;
+                        player.y += Math.sin(rad) * steps;
+                        break;
+                    case 'rotate':
+                        const deg = parseFloat(inputs[0].value);
+                        player.angle += deg;
+                        break;
+                    case 'color':
+                        player.color = inputs[0].value;
+                        break;
+                    case 'scale':
+                        player.size += parseFloat(inputs[0].value);
+                        break;
+                }
+            });
+            drawPlayer();
+        }
+
+        // Init
+        drawPlayer();
+    </script>
+</body>
+</html>

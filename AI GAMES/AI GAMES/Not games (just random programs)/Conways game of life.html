@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conway's Game of Life</title>
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    background-color: #111;
+    color: #fff;
+    margin: 0;
+    padding: 20px;
+  }
+  canvas {
+    border: 1px solid #555;
+    background-color: #000;
+    cursor: pointer;
+  }
+  .controls {
+    margin: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  label {
+    margin-right: 5px;
+  }
+  input[type="range"] {
+    width: 100px;
+  }
+  button {
+    padding: 5px 15px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>Conway's Game of Life</h1>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<div class="controls">
+  <button id="startBtn">Start</button>
+  <button id="pauseBtn">Pause</button>
+  <button id="clearBtn">Clear</button>
+  <label for="zoomSlider">Zoom:</label>
+  <input type="range" id="zoomSlider" min="5" max="50" value="10">
+  <label for="speedSlider">Speed:</label>
+  <input type="range" id="speedSlider" min="1" max="60" value="10">
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let cellSize = 10;
+let cols = Math.floor(canvas.width / cellSize);
+let rows = Math.floor(canvas.height / cellSize);
+let grid = createGrid();
+let running = false;
+let interval = 100; // milliseconds per update
+let timer;
+
+function createGrid() {
+  const arr = new Array(rows);
+  for (let y = 0; y < rows; y++) {
+    arr[y] = new Array(cols).fill(0);
+  }
+  return arr;
+}
+
+function drawGrid() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      ctx.fillStyle = grid[y][x] ? '#00FF00' : '#000';
+      ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+      ctx.strokeStyle = '#111';
+      ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+    }
+  }
+}
+
+function getNextGeneration() {
+  const next = createGrid();
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const neighbors = countNeighbors(x, y);
+      if (grid[y][x] === 1) {
+        next[y][x] = neighbors === 2 || neighbors === 3 ? 1 : 0;
+      } else {
+        next[y][x] = neighbors === 3 ? 1 : 0;
+      }
+    }
+  }
+  grid = next;
+}
+
+function countNeighbors(x, y) {
+  let count = 0;
+  for (let j = -1; j <= 1; j++) {
+    for (let i = -1; i <= 1; i++) {
+      if (i === 0 && j === 0) continue;
+      const col = (x + i + cols) % cols;
+      const row = (y + j + rows) % rows;
+      count += grid[row][col];
+    }
+  }
+  return count;
+}
+
+function update() {
+  getNextGeneration();
+  drawGrid();
+}
+
+function start() {
+  if (!running) {
+    running = true;
+    timer = setInterval(update, interval);
+  }
+}
+
+function pause() {
+  running = false;
+  clearInterval(timer);
+}
+
+function clearGrid() {
+  pause();
+  grid = createGrid();
+  drawGrid();
+}
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - rect.left) / cellSize);
+  const y = Math.floor((e.clientY - rect.top) / cellSize);
+  if (y < rows && x < cols) {
+    grid[y][x] = grid[y][x] ? 0 : 1;
+    drawGrid();
+  }
+});
+
+document.getElementById('startBtn').addEventListener('click', start);
+document.getElementById('pauseBtn').addEventListener('click', pause);
+document.getElementById('clearBtn').addEventListener('click', clearGrid);
+
+document.getElementById('zoomSlider').addEventListener('input', (e) => {
+  cellSize = parseInt(e.target.value);
+  cols = Math.floor(canvas.width / cellSize);
+  rows = Math.floor(canvas.height / cellSize);
+  // Resize grid keeping old cells if possible
+  const newGrid = createGrid();
+  for (let y = 0; y < Math.min(rows, grid.length); y++) {
+    for (let x = 0; x < Math.min(cols, grid[0].length); x++) {
+      newGrid[y][x] = grid[y][x];
+    }
+  }
+  grid = newGrid;
+  drawGrid();
+});
+
+document.getElementById('speedSlider').addEventListener('input', (e) => {
+  interval = 1000 / parseInt(e.target.value);
+  if (running) {
+    clearInterval(timer);
+    timer = setInterval(update, interval);
+  }
+});
+
+drawGrid();
+</script>
+
+</body>
+</html>

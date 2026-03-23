@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Simple Paint Program</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #2b2b2b;
+    color: #eee;
+    display: flex;
+    height: 100vh;
+  }
+  #toolbar {
+    width: 260px;
+    background: #1f1f1f;
+    padding: 12px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  #canvasContainer {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #444;
+  }
+  canvas {
+    background: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.6);
+    cursor: crosshair;
+  }
+  input, select, button { padding:6px; background:#2e2e2e; color:#fff; border:1px solid #444; border-radius:4px; }
+  button:hover{ background:#3a3a3a; cursor:pointer; }
+  .row{ display:flex; gap:6px; }
+  .row input{ flex:1; }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <h2>Paint Tools</h2>
+  <label>Tool</label>
+  <select id="tool">
+    <option value="pencil">Pencil</option>
+    <option value="brush">Brush</option>
+    <option value="line">Line</option>
+    <option value="rect">Square</option>
+    <option value="circle">Circle</option>
+    <option value="bucket">Bucket</option>
+    <option value="eraser">Eraser</option>
+    <option value="move">Move</option>
+  </select>
+
+  <label>Color</label>
+  <input type="color" id="colorPicker" value="#000000" />
+  <input type="text" id="hexInput" value="#000000" />
+  <div class="row">
+    <input type="number" id="r" min="0" max="255" value="0" />
+    <input type="number" id="g" min="0" max="255" value="0" />
+    <input type="number" id="b" min="0" max="255" value="0" />
+  </div>
+
+  <label>Brush Size</label>
+  <input type="range" id="size" min="1" max="50" value="5" />
+
+  <label>Opacity</label>
+  <input type="range" id="opacity" min="0.01" max="1" step="0.01" value="1" />
+
+  <label>Background</label>
+  <input type="color" id="bgColor" value="#ffffff" />
+  <div class="row">
+    <input type="number" id="bgWidth" value="900" />
+    <input type="number" id="bgHeight" value="600" />
+  </div>
+  <button id="resizeCanvas">Resize Canvas</button>
+  <button id="clear">Clear</button>
+  <button id="savePNG">Save PNG</button>
+  <button id="saveJPG">Save JPG</button>
+</div>
+
+<div id="canvasContainer">
+  <canvas id="canvas" width="900" height="600"></canvas>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+let layers = [createLayer()];
+let activeLayer = 0;
+let drawing = false;
+let startX = 0, startY = 0;
+let snapshot = null;
+let moveStart = null;
+
+const tool = document.getElementById('tool');
+const colorPicker = document.getElementById('colorPicker');
+const hexInput = document.getElementById('hexInput');
+const rInput = document.getElementById('r');
+const gInput = document.getElementById('g');
+const bInput = document.getElementById('b');
+const sizeInput = document.getElementById('size');
+const opacityInput = document.getElementById('opacity');
+const bgColorInput = document.getElementById('bgColor');
+const bgWidth = document.getElementById('bgWidth');
+const bgHeight = document.getElementById('bgHeight');
+
+function createLayer(){ const c=document.createElement('canvas'); c.width=canvas.width; c.height=canvas.height; return c; }
+function activeCtx(){ return layers[activeLayer].getContext('2d'); }
+
+function redraw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = bgColorInput.value;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  layers.forEach(l=>ctx.drawImage(l,0,0));
+}
+
+function hexToRgb(h){ h=h.replace('#',''); const n=parseInt(h,16); return {r:(n>>16)&255,g:(n>>8)&255,b:n&255}; }
+function rgbToHex(r,g,b){ return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join(''); }
+
+function syncFromHex(){ const c=hexToRgb(hexInput.value); rInput.value=c.r; gInput.value=c.g; bInput.value=c.b; colorPicker.value=hexInput.value; }
+function syncFromRGB(){ hexInput.value=rgbToHex(+rInput.value,+gInput.value,+bInput.value); colorPicker.value=hexInput.value; }
+
+colorPicker.oninput=()=>{ hexInput.value=colorPicker.value; syncFromHex(); };
+hexInput.oninput=syncFromHex;
+rInput.oninput=gInput.oninput=bInput.oninput=syncFromRGB;
+
+// Reset drawing state when switching tools
+tool.onchange = () => {
+  drawing = false;
+  moveStart = null;
+  activeCtx().beginPath();
+};
+
+canvas.onmousedown = e => {
+  startX = e.offsetX; startY = e.offsetY;
+  const lctx = activeCtx();
+
+  if(tool.value==='bucket'){ bucketFill(startX,startY); return; }
+  if(tool.value==='move'){ moveStart={x:startX,y:startY}; snapshot=lctx.getImageData(0,0,canvas.width,canvas.height); return; }
+
+  drawing = true;
+  snapshot = lctx.getImageData(0,0,canvas.width,canvas.height);
+
+  if(tool.value==='pencil' || tool.value==='brush' || tool.value==='eraser'){
+    lctx.beginPath();
+    lctx.moveTo(startX,startY);
+  }
+};
+
+canvas.onmousemove = e => {
+  const lctx = activeCtx();
+
+  if(tool.value==='move' && moveStart){
+    lctx.clearRect(0,0,canvas.width,canvas.height);
+    lctx.putImageData(snapshot, e.offsetX - moveStart.x, e.offsetY - moveStart.y);
+    redraw();
+    return;
+  }
+
+  if(!drawing) return;
+
+  lctx.lineWidth = sizeInput.value;
+  lctx.lineCap = 'round';
+  lctx.globalAlpha = opacityInput.value;
+
+  const x = e.offsetX, y = e.offsetY;
+
+  if(tool.value==='eraser'){
+    lctx.globalCompositeOperation='destination-out';
+    lctx.lineTo(x,y);
+    lctx.stroke();
+    lctx.globalCompositeOperation='source-over';
+  }
+  else if(tool.value==='pencil' || tool.value==='brush'){
+    lctx.lineTo(x,y);
+    lctx.stroke();
+  }
+  else{
+    lctx.putImageData(snapshot,0,0);
+    lctx.beginPath();
+    if(tool.value==='line'){ lctx.moveTo(startX,startY); lctx.lineTo(x,y); lctx.stroke(); }
+    if(tool.value==='rect'){ lctx.strokeRect(startX,startY,x-startX,y-startY); }
+    if(tool.value==='circle'){ const r=Math.hypot(x-startX,y-startY); lctx.arc(startX,startY,r,0,Math.PI*2); lctx.stroke(); }
+  }
+
+  redraw();
+};
+
+canvas.onmouseup = () => { drawing=false; moveStart=null; redraw(); };
+
+document.getElementById('clear').onclick = () => { layers.forEach(l=>l.getContext('2d').clearRect(0,0,canvas.width,canvas.height)); redraw(); };
+
+document.getElementById('resizeCanvas').onclick = () => {
+  const old = layers.map(l => l.getContext('2d').getImageData(0,0,l.width,l.height));
+  canvas.width = +bgWidth.value; canvas.height = +bgHeight.value;
+  layers = layers.map(()=>createLayer());
+  layers.forEach((l,i)=>l.getContext('2d').putImageData(old[i],0,0));
+  redraw();
+};
+
+function bucketFill(x,y){
+  const lctx = activeCtx();
+  const img = lctx.getImageData(0,0,canvas.width,canvas.height);
+  const t = img.data.slice((y*img.width+x)*4,(y*img.width+x)*4+4);
+  const f = Object.values(hexToRgb(hexInput.value)).concat(255);
+  const stack = [[x,y]];
+  while(stack.length){
+    const [cx,cy] = stack.pop();
+    if(cx<0||cy<0||cx>=img.width||cy>=img.height) continue;
+    const i=(cy*img.width+cx)*4;
+    if(!img.data.slice(i,i+4).every((v,j)=>v===t[j])) continue;
+    img.data.set(f,i);
+    stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
+  }
+  lctx.putImageData(img,0,0);
+  redraw();
+}
+
+function save(type){ const a=document.createElement('a'); a.download=`painting.${type}`; a.href=canvas.toDataURL(`image/${type}`); a.click(); }
+document.getElementById('savePNG').onclick=()=>save('png');
+document.getElementById('saveJPG').onclick=()=>save('jpeg');
+
+redraw();
+</script>
+</body>
+</html>

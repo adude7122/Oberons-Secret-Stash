@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Drawer</title>
+    <style>
+        /* CSS Variables for Theming */
+        :root {
+            --bg-color: #f0f2f5;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #cccccc;
+            --canvas-border: #333333;
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --line-color: #000000;
+        }
+
+        /* Dark Mode Override using System Default */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --container-bg: #1e1e1e;
+                --text-color: #e0e0e0;
+                --border-color: #444444;
+                --canvas-border: #aaaaaa;
+                --primary-color: #4dabf7;
+                --primary-hover: #3b8dc4;
+                --line-color: #ffffff;
+            }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h1 { margin-bottom: 20px; }
+
+        .controls {
+            background-color: var(--container-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            width: 70px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        button:hover { background-color: var(--primary-hover); }
+        button.secondary { background-color: #6c757d; }
+        button.secondary:hover { background-color: #545b62; }
+
+        .canvas-container {
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        canvas {
+            background-color: var(--container-bg);
+            border: 2px solid var(--canvas-border);
+            border-radius: 4px;
+            cursor: crosshair;
+            display: block;
+        }
+
+        .status {
+            margin-top: 10px;
+            font-style: italic;
+            opacity: 0.8;
+            height: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Line Drawer</h1>
+
+    <div class="controls">
+        <div class="input-group">
+            <label for="x1">X1</label>
+            <input type="number" id="x1" placeholder="0">
+        </div>
+        <div class="input-group">
+            <label for="y1">Y1</label>
+            <input type="number" id="y1" placeholder="0">
+        </div>
+        <div class="input-group">
+            <label for="x2">X2</label>
+            <input type="number" id="x2" placeholder="0">
+        </div>
+        <div class="input-group">
+            <label for="y2">Y2</label>
+            <input type="number" id="y2" placeholder="0">
+        </div>
+        
+        <button id="drawBtn">Draw Line</button>
+        <button id="clearBtn" class="secondary">Clear Canvas</button>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="drawingCanvas" width="600" height="400"></canvas>
+    </div>
+    
+    <div class="status" id="statusText">Click on the canvas to set the start point...</div>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const drawBtn = document.getElementById('drawBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const statusText = document.getElementById('statusText');
+        
+        // Input fields
+        const inputs = {
+            x1: document.getElementById('x1'),
+            y1: document.getElementById('y1'),
+            x2: document.getElementById('x2'),
+            y2: document.getElementById('y2')
+        };
+
+        // State
+        let lines = []; // Store lines to redraw them if theme changes
+        let startPoint = null; // To track the first click
+
+        // --- Drawing Logic ---
+
+        function getLineColor() {
+            // Read the CSS variable for line color (adjusts based on theme)
+            return getComputedStyle(document.documentElement).getPropertyValue('--line-color').trim();
+        }
+
+        function drawAllLines() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const color = getLineColor();
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+
+            lines.forEach(line => {
+                ctx.beginPath();
+                ctx.moveTo(line.x1, line.y1);
+                ctx.lineTo(line.x2, line.y2);
+                ctx.stroke();
+            });
+
+            // If a start point is active, draw a small dot indicator
+            if (startPoint) {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(startPoint.x, startPoint.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function addLine(x1, y1, x2, y2) {
+            lines.push({ x1, y1, x2, y2 });
+            drawAllLines();
+        }
+
+        // --- Event Listeners ---
+
+        // 1. Button Draw
+        drawBtn.addEventListener('click', () => {
+            const x1 = parseInt(inputs.x1.value) || 0;
+            const y1 = parseInt(inputs.y1.value) || 0;
+            const x2 = parseInt(inputs.x2.value) || 0;
+            const y2 = parseInt(inputs.y2.value) || 0;
+
+            addLine(x1, y1, x2, y2);
+            statusText.textContent = `Line drawn from (${x1}, ${y1}) to (${x2}, ${y2})`;
+        });
+
+        // 2. Clear Canvas
+        clearBtn.addEventListener('click', () => {
+            lines = [];
+            startPoint = null;
+            drawAllLines();
+            statusText.textContent = "Canvas cleared.";
+            // Clear inputs
+            Object.values(inputs).forEach(input => input.value = '');
+        });
+
+        // 3. Canvas Click Interaction
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (!startPoint) {
+                // First click
+                startPoint = { x, y };
+                
+                // Update inputs for visual feedback
+                inputs.x1.value = Math.round(x);
+                inputs.y1.value = Math.round(y);
+                
+                statusText.textContent = `Start point set at (${Math.round(x)}, ${Math.round(y)}). Click destination.`;
+                drawAllLines(); // Redraw to show the start dot
+            } else {
+                // Second click
+                inputs.x2.value = Math.round(x);
+                inputs.y2.value = Math.round(y);
+                
+                addLine(startPoint.x, startPoint.y, x, y);
+                
+                statusText.textContent = "Line drawn.";
+                startPoint = null; // Reset for next line
+            }
+        });
+
+        // --- Theme Change Handling ---
+        
+        // Listen for system theme changes to redraw lines in correct color
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            // Small timeout to allow CSS to update variables first
+            setTimeout(drawAllLines, 50);
+        });
+
+        // Initial draw setup
+        drawAllLines();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player with Playlist Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            height: fit-content;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #b8b8d1;
+        }
+
+        .video-container {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        video {
+            width: 100%;
+            display: block;
+            max-height: 600px;
+        }
+
+        .controls {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-container {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            border: none;
+        }
+
+        .time-display {
+            color: #fff;
+            font-size: 0.9rem;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .playlist-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .playlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .playlist-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .playlist-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .playlist-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .playlist-item.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .video-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .video-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .video-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .video-item.playing {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .video-info {
+            flex: 1;
+        }
+
+        .video-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .video-size {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-input-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .storage-info {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+
+        .storage-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .storage-used {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #2d2d44;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] {
+            width: 80px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Playlists</h2>
+            <button class="btn btn-primary" onclick="showCreatePlaylistModal()" style="width: 100%; margin-bottom: 15px;">+ New Playlist</button>
+            <div class="playlist-list" id="playlistList"></div>
+            
+            <div class="storage-info">
+                <div><strong>Storage Used:</strong></div>
+                <div id="storageText">Calculating...</div>
+                <div class="storage-bar">
+                    <div class="storage-used" id="storageBar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <h1>🎬 Advanced Video Player</h1>
+            
+            <div class="video-container">
+                <video id="videoPlayer"></video>
+                <div class="controls">
+                    <div class="control-row">
+                        <div class="progress-container" id="progressContainer">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <button class="btn" id="playPauseBtn" onclick="togglePlayPause()">▶ Play</button>
+                        <button class="btn" onclick="previousVideo()">⏮ Previous</button>
+                        <button class="btn" onclick="nextVideo()">⏭ Next</button>
+                        <div class="time-display" id="timeDisplay">0:00 / 0:00</div>
+                        <div class="volume-control">
+                            <span>🔊</span>
+                            <input type="range" id="volumeSlider" min="0" max="100" value="100" onchange="changeVolume()">
+                        </div>
+                        <button class="btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="playlist-section">
+                <div class="playlist-header">
+                    <h2 id="currentPlaylistName">Select a Playlist</h2>
+                    <div>
+                        <label class="file-input-label">
+                            + Add Videos
+                            <input type="file" id="videoInput" accept="video/*" multiple onchange="handleVideoUpload()">
+                        </label>
+                        <button class="btn btn-danger" onclick="deleteCurrentPlaylist()" style="margin-left: 10px;">Delete Playlist</button>
+                    </div>
+                </div>
+                <div class="video-list" id="videoList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="createPlaylistModal">
+        <div class="modal-content">
+            <h2>Create New Playlist</h2>
+            <input type="text" id="playlistNameInput" placeholder="Enter playlist name...">
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="createPlaylist()">Create</button>
+                <button class="btn" onclick="hideCreatePlaylistModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let db;
+        let currentPlaylist = null;
+        let currentVideoIndex = -1;
+        let playlists = [];
+        const videoPlayer = document.getElementById('videoPlayer');
+
+        // Initialize IndexedDB
+        async function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('VideoPlayerDB', 1);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    
+                    if (!database.objectStoreNames.contains('playlists')) {
+                        database.createObjectStore('playlists', { keyPath: 'id', autoIncrement: true });
+                    }
+                    
+                    if (!database.objectStoreNames.contains('videos')) {
+                        const videoStore = database.createObjectStore('videos', { keyPath: 'id', autoIncrement: true });
+                        videoStore.createIndex('playlistId', 'playlistId', { unique: false });
+                    }
+                };
+            });
+        }
+
+        // Storage management
+        async function updateStorageInfo() {
+            if (navigator.storage && navigator.storage.estimate) {
+                const estimate = await navigator.storage.estimate();
+                const usedGB = (estimate.usage / (1024 * 1024 * 1024)).toFixed(2);
+                const totalGB = (estimate.quota / (1024 * 1024 * 1024)).toFixed(2);
+                const percentage = ((estimate.usage / estimate.quota) * 100).toFixed(1);
+                
+                document.getElementById('storageText').textContent = `${usedGB} GB / ${totalGB} GB (${percentage}%)`;
+                document.getElementById('storageBar').style.width = `${percentage}%`;
+            }
+        }
+
+        // Playlist management
+        async function loadPlaylists() {
+            const transaction = db.transaction(['playlists'], 'readonly');
+            const store = transaction.objectStore('playlists');
+            const request = store.getAll();
+            
+            request.onsuccess = () => {
+                playlists = request.result;
+                renderPlaylists();
+            };
+        }
+
+        function renderPlaylists() {
+            const list = document.getElementById('playlistList');
+            list.innerHTML = '';
+            
+            playlists.forEach(playlist => {
+                const item = document.createElement('div');
+                item.className = 'playlist-item';
+                if (currentPlaylist && currentPlaylist.id === playlist.id) {
+                    item.classList.add('active');
+                }
+                item.innerHTML = `
+                    <span>${playlist.name}</span>
+                    <span style="font-size: 0.8rem; color: #888;">${playlist.videoCount || 0} videos</span>
+                `;
+                item.onclick = () => selectPlaylist(playlist);
+                list.appendChild(item);
+            });
+        }
+
+        async function selectPlaylist(playlist) {
+            currentPlaylist = playlist;
+            currentVideoIndex = -1;
+            document.getElementById('currentPlaylistName').textContent = playlist.name;
+            await loadVideosForPlaylist(playlist.id);
+            renderPlaylists();
+        }
+
+        async function loadVideosForPlaylist(playlistId) {
+            const transaction = db.transaction(['videos'], 'readonly');
+            const store = transaction.objectStore('videos');
+            const index = store.index('playlistId');
+            const request = index.getAll(playlistId);
+            
+            request.onsuccess = () => {
+                currentPlaylist.videos = request.result;
+                renderVideos();
+            };
+        }
+
+        function renderVideos() {
+            const list = document.getElementById('videoList');
+            list.innerHTML = '';
+            
+            if (!currentPlaylist || !currentPlaylist.videos || currentPlaylist.videos.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">No videos in this playlist</div>';
+                return;
+            }
+            
+            currentPlaylist.videos.forEach((video, index) => {
+                const item = document.createElement('div');
+                item.className = 'video-item';
+                if (index === currentVideoIndex) {
+                    item.classList.add('playing');
+                }
+                
+                const sizeInMB = (video.size / (1024 * 1024)).toFixed(2);
+                item.innerHTML = `
+                    <div class="video-info">
+                        <div class="video-name">${video.name}</div>
+                        <div class="video-size">${sizeInMB} MB</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteVideo(event, ${video.id})">×</button>
+                `;
+                item.onclick = (e) => {
+                    if (!e.target.classList.contains('btn-danger')) {
+                        playVideo(index);
+                    }
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function showCreatePlaylistModal() {
+            document.getElementById('createPlaylistModal').classList.add('active');
+            document.getElementById('playlistNameInput').value = '';
+            document.getElementById('playlistNameInput').focus();
+        }
+
+        function hideCreatePlaylistModal() {
+            document.getElementById('createPlaylistModal').classList.remove('active');
+        }
+
+        async function createPlaylist() {
+            const name = document.getElementById('playlistNameInput').value.trim();
+            if (!name) {
+                alert('Please enter a playlist name');
+                return;
+            }
+            
+            const transaction = db.transaction(['playlists'], 'readwrite');
+            const store = transaction.objectStore('playlists');
+            const playlist = { name, videoCount: 0, createdAt: Date.now() };
+            
+            store.add(playlist);
+            
+            transaction.oncomplete = () => {
+                hideCreatePlaylistModal();
+                loadPlaylists();
+                updateStorageInfo();
+            };
+        }
+
+        async function deleteCurrentPlaylist() {
+            if (!currentPlaylist) {
+                alert('No playlist selected');
+                return;
+            }
+            
+            if (!confirm(`Delete playlist "${currentPlaylist.name}" and all its videos?`)) {
+                return;
+            }
+            
+            const transaction = db.transaction(['playlists', 'videos'], 'readwrite');
+            const playlistStore = transaction.objectStore('playlists');
+            const videoStore = transaction.objectStore('videos');
+            const index = videoStore.index('playlistId');
+            
+            playlistStore.delete(currentPlaylist.id);
+            
+            const videosRequest = index.getAllKeys(currentPlaylist.id);
+            videosRequest.onsuccess = () => {
+                videosRequest.result.forEach(key => videoStore.delete(key));
+            };
+            
+            transaction.oncomplete = () => {
+                currentPlaylist = null;
+                currentVideoIndex = -1;
+                videoPlayer.src = '';
+                document.getElementById('currentPlaylistName').textContent = 'Select a Playlist';
+                loadPlaylists();
+                renderVideos();
+                updateStorageInfo();
+            };
+        }
+
+        // Video management
+        async function handleVideoUpload() {
+            if (!currentPlaylist) {
+                alert('Please select a playlist first');
+                return;
+            }
+            
+            const files = document.getElementById('videoInput').files;
+            const transaction = db.transaction(['videos', 'playlists'], 'readwrite');
+            const videoStore = transaction.objectStore('videos');
+            const playlistStore = transaction.objectStore('playlists');
+            
+            for (let file of files) {
+                const video = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    playlistId: currentPlaylist.id,
+                    blob: file,
+                    addedAt: Date.now()
+                };
+                videoStore.add(video);
+            }
+            
+            currentPlaylist.videoCount = (currentPlaylist.videoCount || 0) + files.length;
+            playlistStore.put(currentPlaylist);
+            
+            transaction.oncomplete = () => {
+                loadVideosForPlaylist(currentPlaylist.id);
+                loadPlaylists();
+                updateStorageInfo();
+            };
+            
+            document.getElementById('videoInput').value = '';
+        }
+
+        async function deleteVideo(event, videoId) {
+            event.stopPropagation();
+            
+            if (!confirm('Delete this video?')) {
+                return;
+            }
+            
+            const transaction = db.transaction(['videos', 'playlists'], 'readwrite');
+            const videoStore = transaction.objectStore('videos');
+            const playlistStore = transaction.objectStore('playlists');
+            
+            videoStore.delete(videoId);
+            
+            if (currentPlaylist) {
+                currentPlaylist.videoCount = Math.max(0, (currentPlaylist.videoCount || 1) - 1);
+                playlistStore.put(currentPlaylist);
+            }
+            
+            transaction.oncomplete = () => {
+                loadVideosForPlaylist(currentPlaylist.id);
+                loadPlaylists();
+                updateStorageInfo();
+            };
+        }
+
+        // Video playback
+        async function playVideo(index) {
+            if (!currentPlaylist || !currentPlaylist.videos || index < 0 || index >= currentPlaylist.videos.length) {
+                return;
+            }
+            
+            currentVideoIndex = index;
+            const video = currentPlaylist.videos[index];
+            
+            const url = URL.createObjectURL(video.blob);
+            videoPlayer.src = url;
+            videoPlayer.play();
+            
+            renderVideos();
+        }
+
+        function togglePlayPause() {
+            if (videoPlayer.paused) {
+                videoPlayer.play();
+            } else {
+                videoPlayer.pause();
+            }
+        }
+
+        function previousVideo() {
+            if (currentVideoIndex > 0) {
+                playVideo(currentVideoIndex - 1);
+            }
+        }
+
+        function nextVideo() {
+            if (currentPlaylist && currentPlaylist.videos && currentVideoIndex < currentPlaylist.videos.length - 1) {
+                playVideo(currentVideoIndex + 1);
+            }
+        }
+
+        function changeVolume() {
+            videoPlayer.volume = document.getElementById('volumeSlider').value / 100;
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                videoPlayer.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Video player events
+        videoPlayer.addEventListener('play', () => {
+            document.getElementById('playPauseBtn').textContent = '⏸ Pause';
+        });
+
+        videoPlayer.addEventListener('pause', () => {
+            document.getElementById('playPauseBtn').textContent = '▶ Play';
+        });
+
+        videoPlayer.addEventListener('timeupdate', () => {
+            const progress = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            
+            const current = formatTime(videoPlayer.currentTime);
+            const duration = formatTime(videoPlayer.duration);
+            document.getElementById('timeDisplay').textContent = `${current} / ${duration}`;
+        });
+
+        videoPlayer.addEventListener('ended', () => {
+            nextVideo();
+        });
+
+        document.getElementById('progressContainer').addEventListener('click', (e) => {
+            const rect = e.target.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+            videoPlayer.currentTime = percent * videoPlayer.duration;
+        });
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            
+            switch(e.key) {
+                case ' ':
+                    e.preventDefault();
+                    togglePlayPause();
+                    break;
+                case 'ArrowLeft':
+                    videoPlayer.currentTime -= 5;
+                    break;
+                case 'ArrowRight':
+                    videoPlayer.currentTime += 5;
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    videoPlayer.volume = Math.min(1, videoPlayer.volume + 0.1);
+                    document.getElementById('volumeSlider').value = videoPlayer.volume * 100;
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    videoPlayer.volume = Math.max(0, videoPlayer.volume - 0.1);
+                    document.getElementById('volumeSlider').value = videoPlayer.volume * 100;
+                    break;
+                case 'f':
+                    toggleFullscreen();
+                    break;
+                case 'n':
+                    nextVideo();
+                    break;
+                case 'p':
+                    previousVideo();
+                    break;
+            }
+        });
+
+        // Initialize
+        initDB().then(() => {
+            loadPlaylists();
+            updateStorageInfo();
+        });
+    </script>
+</body>
+</html>

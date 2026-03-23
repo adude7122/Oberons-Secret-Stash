@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Function Graphing Calculator</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --panel-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #ccc;
+            --accent-color: #007bff;
+            --danger-color: #dc3545;
+            --grid-line: #e0e0e0;
+            --axis-line: #333;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --panel-bg: #1e1e1e;
+                --text-color: #e0e0e0;
+                --border-color: #444;
+                --accent-color: #4dabf7;
+                --danger-color: #ff6b6b;
+                --grid-line: #333;
+                --axis-line: #fff;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 0.5rem;
+            text-align: center;
+        }
+
+        #main-layout {
+            display: flex;
+            flex-direction: row;
+            width: 98%;
+            height: 90%;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* Sidebar for controls */
+        #sidebar {
+            width: 300px;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        #function-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 8px;
+            background: var(--bg-color);
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .color-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background-color: var(--panel-bg);
+            color: var(--text-color);
+            font-size: 0.9rem;
+            min-width: 0; /* Prevents overflow */
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: opacity 0.2s;
+        }
+        
+        button:hover { opacity: 0.9; }
+
+        .btn-primary { background-color: var(--accent-color); width: 100%; margin-bottom: 5px;}
+        .btn-danger { background-color: var(--danger-color); padding: 4px 8px; font-size: 0.8rem;}
+        .btn-reset { background-color: #6c757d; width: 100%; }
+
+        /* Canvas Area */
+        #canvas-container {
+            flex-grow: 1;
+            position: relative;
+            border: 1px solid var(--border-color);
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        #canvas-container:active { cursor: grabbing; }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        @media (max-width: 600px) {
+            #main-layout { flex-direction: column; }
+            #sidebar { width: auto; height: 30%; }
+            #function-list { overflow-y: scroll; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h3>Multi-Function Graphing Calculator</h3>
+    </header>
+
+    <div id="main-layout">
+        <aside id="sidebar">
+            <div id="function-list">
+                </div>
+            <button id="addBtn" class="btn-primary">+ Add Function</button>
+            <button id="resetBtn" class="btn-reset">Reset View</button>
+        </aside>
+
+        <div id="canvas-container">
+            <canvas id="graphCanvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+        const functionList = document.getElementById('function-list');
+        
+        // Define a palette of colors for different functions
+        const palette = [
+            '#e63946', // Red
+            '#4dabf7', // Blue
+            '#50c878', // Emerald Green
+            '#9b59b6', // Purple
+            '#ff9f43', // Orange
+            '#2d3436'  // Dark/Light toggle dependent usually, but fixed here
+        ];
+
+        // View State
+        let scale = 40; 
+        let offsetX = 0; 
+        let offsetY = 0; 
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+
+        // Resize Logic
+        function resize() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            draw();
+        }
+        window.addEventListener('resize', resize);
+
+        // --- UI Logic: Add/Remove Inputs ---
+
+        function createInputRow(value = '', index) {
+            const div = document.createElement('div');
+            div.className = 'input-row';
+            
+            // Color dot
+            const colorDot = document.createElement('div');
+            colorDot.className = 'color-indicator';
+            const color = palette[index % palette.length];
+            colorDot.style.backgroundColor = color;
+            
+            // Input field
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = value;
+            input.placeholder = 'e.g. sin(x)';
+            input.dataset.color = color; // Store color for the drawer
+            input.addEventListener('input', draw); // Redraw on typing
+            input.addEventListener('keyup', (e) => { if(e.key === 'Enter') draw(); });
+
+            // Remove button
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'btn-danger';
+            removeBtn.innerText = 'X';
+            removeBtn.onclick = () => {
+                functionList.removeChild(div);
+                draw();
+            };
+
+            div.appendChild(colorDot);
+            div.appendChild(input);
+            div.appendChild(removeBtn);
+            functionList.appendChild(div);
+        }
+
+        document.getElementById('addBtn').addEventListener('click', () => {
+            const currentCount = functionList.children.length;
+            createInputRow('', currentCount);
+        });
+
+        // Initialize with two examples
+        createInputRow('sin(x)', 0);
+        createInputRow('x^2 / 10', 1);
+
+        // --- Math Parsing ---
+        function evaluateFunction(x, funcStr) {
+            try {
+                let sanitized = funcStr.toLowerCase().trim();
+                if (!sanitized) return NaN;
+
+                sanitized = sanitized.replace(/\^/g, '**');
+                const mathFuncs = ['sin', 'cos', 'tan', 'sqrt', 'log', 'abs', 'pow', 'exp', 'pi', 'max', 'min'];
+                mathFuncs.forEach(func => {
+                    const regex = new RegExp(`(?<!Math\\.)\\b${func}\\b`, 'g');
+                    sanitized = sanitized.replace(regex, `Math.${func === 'pi' ? 'PI' : func}`);
+                });
+
+                const f = new Function('x', `return ${sanitized};`);
+                return f(x);
+            } catch (e) {
+                return NaN;
+            }
+        }
+
+        // --- Drawing Logic ---
+        function draw() {
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerX = width / 2 + offsetX;
+            const centerY = height / 2 + offsetY;
+
+            // 1. Background
+            const style = getComputedStyle(document.body);
+            ctx.fillStyle = style.getPropertyValue('--panel-bg').trim();
+            ctx.fillRect(0, 0, width, height);
+
+            const gridColor = style.getPropertyValue('--grid-line').trim();
+            const axisColor = style.getPropertyValue('--axis-line').trim();
+
+            // 2. Grid
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = gridColor;
+            ctx.beginPath();
+
+            const startGridX = ((-centerX) / scale) - 1;
+            const endGridX = ((width - centerX) / scale) + 1;
+            for (let i = Math.floor(startGridX); i <= Math.ceil(endGridX); i++) {
+                const x = centerX + i * scale;
+                ctx.moveTo(x, 0); ctx.lineTo(x, height);
+            }
+
+            const startGridY = (-(height - centerY) / scale) - 1; 
+            const endGridY = (centerY / scale) + 1;
+            for (let i = Math.floor(startGridY); i <= Math.ceil(endGridY); i++) { 
+                const y = centerY - i * scale;
+                ctx.moveTo(0, y); ctx.lineTo(width, y);
+            }
+            ctx.stroke();
+
+            // 3. Axes
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = axisColor;
+            ctx.beginPath();
+            ctx.moveTo(0, centerY); ctx.lineTo(width, centerY); // X Axis
+            ctx.moveTo(centerX, 0); ctx.lineTo(centerX, height); // Y Axis
+            ctx.stroke();
+
+            // 4. Plot All Functions
+            const inputs = document.querySelectorAll('#function-list input[type="text"]');
+            
+            inputs.forEach(input => {
+                const funcStr = input.value;
+                const color = input.dataset.color;
+                
+                if (!funcStr) return;
+
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = color;
+                ctx.beginPath();
+
+                let firstPoint = true;
+                
+                // Optimization: Step size. 1 = every pixel (accurate), 2+ = faster
+                const step = 1; 
+
+                for (let px = 0; px < width; px += step) {
+                    const mathX = (px - centerX) / scale;
+                    const mathY = evaluateFunction(mathX, funcStr);
+
+                    if (isNaN(mathY)) {
+                        firstPoint = true; 
+                        continue;
+                    }
+
+                    const py = centerY - (mathY * scale);
+
+                    // Handle asymptotes (vertical lines)
+                    // If the previous Y and current Y jump massively, don't connect them
+                    let isAsymptote = false;
+                    if (!firstPoint) {
+                        const prevMathX = ((px - step) - centerX) / scale;
+                        const prevMathY = evaluateFunction(prevMathX, funcStr);
+                        const prevPy = centerY - (prevMathY * scale);
+                        if (Math.abs(py - prevPy) > height) isAsymptote = true;
+                    }
+
+                    if (firstPoint || isAsymptote) {
+                        ctx.moveTo(px, py);
+                        firstPoint = false;
+                    } else {
+                        ctx.lineTo(px, py);
+                    }
+                }
+                ctx.stroke();
+            });
+        }
+
+        // --- Controls ---
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            scale = 40; offsetX = 0; offsetY = 0; draw();
+        });
+
+        // Zoom
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const factor = 1 + (0.1 * (e.deltaY < 0 ? 1 : -1));
+            scale = Math.max(5, Math.min(scale * factor, 1000));
+            draw();
+        }, { passive: false });
+
+        // Pan
+        container.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            container.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            container.style.cursor = 'grab';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - lastMouseX;
+            const dy = e.clientY - lastMouseY;
+            offsetX += dx;
+            offsetY += dy;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            draw();
+        });
+
+        // Theme Listener
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+
+        // Init
+        resize();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Pi Calculator</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --panel-hover: #334155;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0ea5e9;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: var(--panel);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5);
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            max-height: 90vh;
+            overflow: hidden;
+        }
+        
+        h1 { margin-top: 0; font-size: 1.8rem; color: var(--accent); text-align: center; }
+        h2 { font-size: 1.15rem; margin-bottom: 0.5rem; }
+        p { color: var(--text-muted); line-height: 1.5; margin-top: 0; font-size: 0.9rem; }
+
+        /* Screens */
+        #menuScreen, #calcScreen {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+        }
+        #calcScreen { display: none; }
+
+        /* Menu Grid */
+        .algo-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-top: 10px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        @media (min-width: 600px) {
+            .algo-grid { grid-template-columns: 1fr 1fr; }
+        }
+        .algo-card {
+            background: var(--bg);
+            border: 1px solid #334155;
+            padding: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+        }
+        .algo-card:hover {
+            border-color: var(--accent);
+            background: var(--panel-hover);
+            transform: translateY(-2px);
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            width: fit-content;
+        }
+        .badge.spigot { background: #312e81; color: #a5b4fc; }
+        .badge.batch { background: #064e3b; color: #6ee7b7; }
+        .badge.world-record { background: #7f1d1d; color: #fca5a5; }
+
+        /* Calculator Controls */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .back-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid #334155;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .back-btn:hover { background: #334155; color: white; }
+        
+        .controls-wrapper {
+            background: var(--bg);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .input-group label { font-weight: bold; color: var(--text-muted); font-size: 0.9rem; }
+        .input-group input[type="number"] {
+            background: var(--panel);
+            border: 1px solid #334155;
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            width: 100px;
+            font-size: 1rem;
+        }
+
+        .action-btn {
+            background-color: var(--accent);
+            color: var(--bg);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 120px;
+        }
+        .action-btn:hover:not(:disabled) { background-color: var(--accent-hover); }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            gap: 8px;
+            min-width: 200px;
+        }
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        
+        /* Output Area */
+        .output-wrapper {
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .output-box {
+            flex-grow: 1;
+            background: #0b1120;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.25rem;
+            line-height: 1.6;
+            word-break: break-all;
+            white-space: pre-wrap;
+            border: 1px solid #334155;
+            box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.2);
+        }
+        .stats {
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div id="menuScreen">
+        <h1>π Generator Menu</h1>
+        <p style="text-align: center;">Select your calculation engine.</p>
+        
+        <div class="algo-grid">
+            
+            <button class="algo-card" onclick="startCalculator('chudnovsky')" style="border-color: var(--danger);">
+                <span class="badge world-record">Batch (World Record)</span>
+                <h2 style="color: var(--danger);">Chudnovsky Algorithm</h2>
+                <p>The undisputed king of Pi. Used by supercomputers to calculate trillions of digits. Driven by advanced Binary Splitting and BigInt square roots. <strong>The absolute fastest algorithm here.</strong></p>
+            </button>
+
+            <button class="algo-card" onclick="startCalculator('machin')" style="border-color: var(--success);">
+                <span class="badge batch">Batch (Very Fast)</span>
+                <h2 style="color: var(--success);">Machin's Formula</h2>
+                <p>Calculates all requested digits behind the scenes using Taylor Series arctangents. Blindingly fast for normal tasks, but eventually outclassed by Chudnovsky.</p>
+            </button>
+
+            <button class="algo-card" onclick="startCalculator('gibbons')">
+                <span class="badge spigot">Spigot (1 by 1)</span>
+                <h2 style="color: #a78bfa;">Gibbons' Spigot</h2>
+                <p>Calculates continuously, digit by digit. Beautiful to watch, but naturally slows down over time as the internal fractions grow exponentially large.</p>
+            </button>
+            
+            <button class="algo-card" onclick="startCalculator('rw')">
+                <span class="badge spigot">Spigot (1 by 1)</span>
+                <h2 style="color: var(--warning);">Rabinowitz-Wagon</h2>
+                <p>A classic bounded spigot from 1995. Uses standard hardware numbers for a lightning-fast, highly consistent visual frame rate.</p>
+            </button>
+
+        </div>
+    </div>
+
+    <div id="calcScreen">
+        <div class="top-bar">
+            <h2 id="algoTitle" style="margin: 0; color: var(--accent);">Algorithm</h2>
+            <button class="back-btn" onclick="backToMenu()">← Back to Menu</button>
+        </div>
+        
+        <div class="controls-wrapper">
+            <div class="control-row">
+                <div class="input-group">
+                    <label for="targetDigits">Target Digits:</label>
+                    <input type="number" id="targetDigits" min="1" max="500000" value="1000">
+                </div>
+                <button id="toggleBtn" class="action-btn">Start</button>
+            </div>
+            
+            <div class="control-row" id="speedControlRow">
+                <div class="slider-group">
+                    <div class="slider-labels">
+                        <span>1 digit/sec</span>
+                        <span id="speedDisplay">30 digits/sec</span>
+                        <span>Max Speed</span>
+                    </div>
+                    <input type="range" id="speedSlider" min="1" max="2000" value="30">
+                </div>
+            </div>
+        </div>
+
+        <div class="output-wrapper">
+            <div class="output-box" id="outputBox"></div>
+        </div>
+        
+        <div class="stats">
+            <span id="countDisplay">Digits: 0</span>
+            <span id="timingMsg" style="color: var(--success); display: none;"></span>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- ALGORITHM 1: CHUDNOVSKY (WORLD RECORD - BINARY SPLITTING) ---
+    function calcPiChudnovsky(digits) {
+        const D = BigInt(digits + 20); // 20 Guard digits to prevent rounding errors
+        const n = Math.floor(digits / 14.181647462) + 1; // Chudnovsky gives ~14.18 digits per term
+        
+        // Binary Splitting Divide & Conquer
+        function split(a, b) {
+            if (b === a + 1) {
+                let k = BigInt(a);
+                if (k === 0n) {
+                    return { P: 1n, Q: 1n, R: 13591409n };
+                } else {
+                    let P = -(6n * k - 5n) * (2n * k - 1n) * (6n * k - 1n);
+                    let Q = 10939058860032000n * (k ** 3n);
+                    let R = P * (13591409n + 545140134n * k);
+                    return { P, Q, R };
+                }
+            } else {
+                let m = Math.floor((a + b) / 2);
+                let res1 = split(a, m);
+                let res2 = split(m, b);
+                return {
+                    P: res1.P * res2.P,
+                    Q: res1.Q * res2.Q,
+                    R: res1.R * res2.Q + res1.P * res2.R
+                };
+            }
+        }
+
+        let { P, Q, R } = split(0, n);
+        
+        const C = 640320n;
+        const N = C * (10n ** (2n * D));
+        
+        // Custom BigInt Integer Square Root (Newton's Method)
+        let x = 800n * (10n ** D); // Extremely close initial guess
+        while (true) {
+            let y = (x + N / x) / 2n;
+            if (y >= x) break;
+            x = y;
+        }
+        
+        let pi = (Q * C * x) / (12n * R);
+        let piStr = pi.toString();
+        return piStr[0] + "." + piStr.slice(1, digits + 1);
+    }
+
+    // --- ALGORITHM 2: MACHIN'S FORMULA (FAST BATCH) ---
+    function calcPiMachin(digits) {
+        const precision = BigInt(digits + 20);
+        const ONE = 10n ** precision;
+
+        function arccot(x) {
+            let x2 = x * x;
+            let term = ONE / x;
+            let sum = term;
+            let n = 3n;
+            let sign = -1n;
+            
+            while (term > 0n) {
+                term = term / x2;
+                if (term === 0n) break;
+                let add = term / n;
+                if (add === 0n) break;
+                
+                if (sign > 0n) sum += add;
+                else sum -= add;
+                
+                n += 2n;
+                sign = -sign;
+            }
+            return sum;
+        }
+
+        let pi = 16n * arccot(5n) - 4n * arccot(239n);
+        let piStr = pi.toString();
+        return piStr[0] + "." + piStr.slice(1, digits + 1);
+    }
+
+    // --- ALGORITHM 3: GIBBONS UNBOUNDED SPIGOT ---
+    function* createGibbonsGenerator() {
+        let q = 1n, r = 0n, t = 1n, k = 1n, n = 3n, l = 3n;
+        while (true) {
+            if (4n * q + r - t < n * t) {
+                yield Number(n);
+                let nr = 10n * (r - n * t);
+                n = (10n * (3n * q + r)) / t - 10n * n;
+                q *= 10n;
+                r = nr;
+            } else {
+                let nr = (2n * q + r) * l;
+                let nn = (q * (7n * k) + 2n + r * l) / (t * l);
+                q *= k;
+                t *= l;
+                l += 2n;
+                k += 1n;
+                n = nn;
+                r = nr;
+            }
+        }
+    }
+
+    // --- ALGORITHM 4: RABINOWITZ-WAGON BOUNDED SPIGOT ---
+    function* createRWGenerator(numDigits) {
+        let len = Math.floor(10 * numDigits / 3) + 1;
+        let a = new Array(len).fill(2);
+        let nines = 0, predigit = 0;
+        let isFirst = true;
+
+        for (let j = 1; j <= numDigits; j++) {
+            let q = 0;
+            for (let i = len; i > 0; i--) {
+                let x = 10 * a[i - 1] + q * i;
+                let denominator = 2 * i - 1;
+                a[i - 1] = x % denominator;
+                q = Math.floor(x / denominator);
+            }
+            a[0] = q % 10;
+            q = Math.floor(q / 10);
+
+            if (q === 9) {
+                nines++;
+            } else if (q === 10) {
+                if (!isFirst) yield (predigit + 1);
+                for (let k = 0; k < nines; k++) yield 0;
+                predigit = 0;
+                nines = 0;
+            } else {
+                if (!isFirst) {
+                    yield predigit;
+                    for (let k = 0; k < nines; k++) yield 9;
+                }
+                predigit = q;
+                nines = 0;
+                isFirst = false;
+            }
+        }
+        yield predigit;
+        for (let k = 0; k < nines; k++) yield 9;
+    }
+
+    // --- STATE & DOM VARIABLES ---
+    let currentAlgo = '';
+    let isRunning = false;
+    let digitCount = 0;
+    let piGenerator = null;
+    let accumulatedTime = 0;
+    let lastFrameTime = 0;
+    let autoScroll = true;
+    let animationFrameId = null;
+
+    const menuScreen = document.getElementById('menuScreen');
+    const calcScreen = document.getElementById('calcScreen');
+    const algoTitle = document.getElementById('algoTitle');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const targetDigitsInput = document.getElementById('targetDigits');
+    const speedControlRow = document.getElementById('speedControlRow');
+    const speedSlider = document.getElementById('speedSlider');
+    const speedDisplay = document.getElementById('speedDisplay');
+    const outputBox = document.getElementById('outputBox');
+    const countDisplay = document.getElementById('countDisplay');
+    const timingMsg = document.getElementById('timingMsg');
+
+    // --- UI EVENT LISTENERS ---
+    speedSlider.addEventListener('input', (e) => speedDisplay.textContent = `${e.target.value} digits/sec`);
+
+    outputBox.addEventListener('scroll', () => {
+        const distanceToBottom = outputBox.scrollHeight - outputBox.scrollTop - outputBox.clientHeight;
+        autoScroll = distanceToBottom < 10;
+    });
+
+    toggleBtn.addEventListener('click', () => {
+        const target = parseInt(targetDigitsInput.value) || 1000;
+
+        if (currentAlgo === 'machin' || currentAlgo === 'chudnovsky') {
+            runBatchCalculation(target);
+            return;
+        }
+
+        // Spigot Logic
+        isRunning = !isRunning;
+        updateToggleButton();
+        targetDigitsInput.disabled = isRunning;
+
+        if (isRunning) {
+            if (!piGenerator || digitCount >= target) {
+                outputBox.innerHTML = '';
+                digitCount = 0;
+                countDisplay.textContent = 'Digits: 0';
+                piGenerator = currentAlgo === 'gibbons' ? createGibbonsGenerator() : createRWGenerator(target);
+            }
+            lastFrameTime = performance.now();
+            animationFrameId = requestAnimationFrame(animationLoop);
+        } else {
+            cancelAnimationFrame(animationFrameId);
+        }
+    });
+
+    function updateToggleButton() {
+        if (currentAlgo === 'machin' || currentAlgo === 'chudnovsky') {
+            toggleBtn.textContent = 'Calculate';
+            toggleBtn.style.backgroundColor = 'var(--accent)';
+            return;
+        }
+        toggleBtn.textContent = isRunning ? 'Pause' : 'Start';
+        toggleBtn.style.backgroundColor = isRunning ? 'var(--warning)' : 'var(--accent)';
+    }
+
+    function setFinishedState() {
+        isRunning = false;
+        toggleBtn.textContent = 'Finished';
+        toggleBtn.style.backgroundColor = 'var(--accent)';
+        toggleBtn.disabled = true;
+        targetDigitsInput.disabled = false;
+        cancelAnimationFrame(animationFrameId);
+    }
+
+    // --- NAVIGATION ---
+    function startCalculator(type) {
+        currentAlgo = type;
+        isRunning = false;
+        digitCount = 0;
+        accumulatedTime = 0;
+        piGenerator = null;
+        cancelAnimationFrame(animationFrameId);
+        
+        outputBox.innerHTML = '';
+        countDisplay.textContent = 'Digits: 0';
+        timingMsg.style.display = 'none';
+        toggleBtn.disabled = false;
+        targetDigitsInput.disabled = false;
+        
+        if (type === 'chudnovsky') {
+            algoTitle.textContent = "Chudnovsky (World Record)";
+            algoTitle.style.color = "var(--danger)";
+            speedControlRow.style.display = 'none';
+        } else if (type === 'machin') {
+            algoTitle.textContent = "Machin's Formula (Batch)";
+            algoTitle.style.color = "var(--success)";
+            speedControlRow.style.display = 'none';
+        } else if (type === 'gibbons') {
+            algoTitle.textContent = "Gibbons' Spigot";
+            algoTitle.style.color = "#a78bfa";
+            speedControlRow.style.display = 'flex';
+        } else if (type === 'rw') {
+            algoTitle.textContent = "Rabinowitz-Wagon Spigot";
+            algoTitle.style.color = "var(--warning)";
+            speedControlRow.style.display = 'flex';
+        }
+
+        updateToggleButton();
+        menuScreen.style.display = 'none';
+        calcScreen.style.display = 'flex';
+    }
+
+    function backToMenu() {
+        isRunning = false;
+        cancelAnimationFrame(animationFrameId);
+        calcScreen.style.display = 'none';
+        menuScreen.style.display = 'flex';
+    }
+
+    // --- BATCH RENDERER (CHUDNOVSKY / MACHIN) ---
+    function runBatchCalculation(target) {
+        toggleBtn.textContent = 'Calculating...';
+        toggleBtn.disabled = true;
+        targetDigitsInput.disabled = true;
+        outputBox.innerHTML = '';
+        timingMsg.style.display = 'none';
+        
+        setTimeout(() => {
+            const startTime = performance.now();
+            let result;
+            if (currentAlgo === 'chudnovsky') result = calcPiChudnovsky(target);
+            if (currentAlgo === 'machin') result = calcPiMachin(target);
+            const endTime = performance.now();
+
+            outputBox.textContent = result;
+            countDisplay.textContent = `Digits: ${target.toLocaleString()}`;
+            timingMsg.textContent = `Calculated in ${Math.round(endTime - startTime)}ms`;
+            timingMsg.style.display = 'inline';
+
+            toggleBtn.textContent = 'Calculate';
+            toggleBtn.disabled = false;
+            targetDigitsInput.disabled = false;
+        }, 50);
+    }
+
+    // --- SPIGOT RENDER LOOP ---
+    function animationLoop(timestamp) {
+        if (!isRunning) return;
+
+        const target = parseInt(targetDigitsInput.value) || 1000;
+        const deltaTime = timestamp - lastFrameTime;
+        lastFrameTime = timestamp;
+        accumulatedTime += deltaTime;
+        if (accumulatedTime > 1000) accumulatedTime = 1000; 
+
+        const digitsPerSecond = parseFloat(speedSlider.value);
+        const msPerDigit = 1000 / digitsPerSecond;
+        let digitsToRenderThisFrame = 0;
+
+        while (accumulatedTime >= msPerDigit) {
+            digitsToRenderThisFrame++;
+            accumulatedTime -= msPerDigit;
+        }
+
+        if (digitsToRenderThisFrame > 0) {
+            let chunk = "";
+            let done = false;
+            
+            for (let i = 0; i < digitsToRenderThisFrame; i++) {
+                if (digitCount >= target) { done = true; break; }
+
+                const result = piGenerator.next();
+                if (result.done) { done = true; break; }
+                
+                chunk += result.value;
+                digitCount++;
+                if (digitCount === 1) chunk += "."; 
+            }
+
+            if (chunk) {
+                outputBox.appendChild(document.createTextNode(chunk));
+                countDisplay.textContent = `Digits: ${digitCount.toLocaleString()}`;
+                if (autoScroll) outputBox.scrollTop = outputBox.scrollHeight;
+            }
+
+            if (done || digitCount >= target) {
+                setFinishedState();
+                return;
+            }
+        }
+        if (isRunning) animationFrameId = requestAnimationFrame(animationLoop);
+    }
+</script>
+</body>
+</html>

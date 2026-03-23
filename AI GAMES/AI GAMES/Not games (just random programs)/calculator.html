@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Scientific Calculator</title>
+    <style>
+        /* --- CSS Variables & Theming --- */
+        :root {
+            --bg-color: #f0f2f5;
+            --calc-bg: #ffffff;
+            --display-bg: #e4e9f2;
+            --text-main: #333333;
+            --text-secondary: #666666;
+            --btn-bg: #f5f7fa;
+            --btn-shadow-light: #ffffff;
+            --btn-shadow-dark: #d1d9e6;
+            --btn-accent: #4d94ff;
+            --btn-accent-text: #ffffff;
+            --btn-operator: #e1e6ed;
+            --btn-danger: #ff5e5e;
+            --font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #18191a;
+            --calc-bg: #242526;
+            --display-bg: #3a3b3c;
+            --text-main: #e4e6eb;
+            --text-secondary: #b0b3b8;
+            --btn-bg: #303134;
+            --btn-shadow-light: #3e4042;
+            --btn-shadow-dark: #1c1c1d;
+            --btn-accent: #2d88ff;
+            --btn-operator: #3e4042;
+            --btn-danger: #ff4d4d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s ease;
+        }
+
+        /* --- Calculator Container --- */
+        .calculator {
+            background-color: var(--calc-bg);
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        /* --- Header & Theme Toggle --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .header h3 {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            font-size: 1.2rem;
+            padding: 5px;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            background-color: var(--display-bg);
+        }
+
+        /* --- Display --- */
+        .display-container {
+            background-color: var(--display-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: right;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .history {
+            height: 20px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .current-input {
+            font-size: 2rem;
+            font-weight: 700;
+            word-wrap: break-word;
+            word-break: break-all;
+            min-height: 40px;
+        }
+
+        /* --- Keypad Grid --- */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        button {
+            border: none;
+            outline: none;
+            background-color: var(--btn-bg);
+            color: var(--text-main);
+            font-size: 1.1rem;
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            box-shadow: 3px 3px 6px var(--btn-shadow-dark), -2px -2px 5px var(--btn-shadow-light);
+            transition: all 0.1s ease;
+            user-select: none;
+        }
+
+        button:active {
+            box-shadow: inset 2px 2px 5px var(--btn-shadow-dark), inset -2px -2px 5px var(--btn-shadow-light);
+            transform: translateY(1px);
+        }
+
+        /* --- Button Variants --- */
+        .btn-op {
+            color: var(--btn-accent);
+            background-color: var(--btn-operator);
+            font-weight: 700;
+        }
+
+        .btn-eq {
+            background-color: var(--btn-accent);
+            color: var(--btn-accent-text);
+            grid-column: span 2;
+        }
+        
+        .btn-eq:active {
+             background-color: #3b7fd6;
+        }
+
+        .btn-ac {
+            color: var(--btn-danger);
+            font-weight: 700;
+        }
+
+        .btn-sci {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* --- Responsive Tweaks --- */
+        @media (max-height: 700px) {
+            button { padding: 12px; }
+            .current-input { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator">
+    <div class="header">
+        <h3>Scientific</h3>
+        <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+            ☾
+        </button>
+    </div>
+
+    <div class="display-container">
+        <div class="history" id="history"></div>
+        <div class="current-input" id="display">0</div>
+    </div>
+
+    <div class="keypad">
+        <button class="btn-sci" onclick="handleMath('sin')">sin</button>
+        <button class="btn-sci" onclick="handleMath('cos')">cos</button>
+        <button class="btn-sci" onclick="handleMath('tan')">tan</button>
+        <button class="btn-sci" onclick="insert('(')">(</button>
+
+        <button class="btn-sci" onclick="handleMath('log')">log</button>
+        <button class="btn-sci" onclick="handleMath('ln')">ln</button>
+        <button class="btn-sci" onclick="handleMath('sqrt')">√</button>
+        <button class="btn-sci" onclick="insert(')')">)</button>
+
+        <button class="btn-ac" onclick="clearDisplay()">AC</button>
+        <button class="btn-op" onclick="deleteChar()">⌫</button>
+        <button class="btn-op" onclick="insert('%')">%</button>
+        <button class="btn-op" onclick="insert('/')">÷</button>
+
+        <button onclick="insert('7')">7</button>
+        <button onclick="insert('8')">8</button>
+        <button onclick="insert('9')">9</button>
+        <button class="btn-op" onclick="insert('*')">×</button>
+
+        <button onclick="insert('4')">4</button>
+        <button onclick="insert('5')">5</button>
+        <button onclick="insert('6')">6</button>
+        <button class="btn-op" onclick="insert('-')">−</button>
+
+        <button onclick="insert('1')">1</button>
+        <button onclick="insert('2')">2</button>
+        <button onclick="insert('3')">3</button>
+        <button class="btn-op" onclick="insert('+')">+</button>
+
+        <button class="btn-sci" onclick="insert('3.14159')">π</button>
+        <button onclick="insert('0')">0</button>
+        <button onclick="insert('.')">.</button>
+        <button class="btn-eq" onclick="calculate()">=</button>
+    </div>
+</div>
+
+<script>
+    /* --- Theme Logic --- */
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+    const iconSun = '☀';
+    const iconMoon = '☾';
+
+    function getSystemTheme() {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    function setTheme(theme) {
+        html.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        themeToggle.textContent = theme === 'dark' ? iconSun : iconMoon;
+    }
+
+    // Initialize Theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        setTheme(savedTheme);
+    } else {
+        setTheme(getSystemTheme());
+    }
+
+    // Listen for system changes if no manual override is active (optional refinement)
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        if (!localStorage.getItem('theme')) {
+            setTheme(e.matches ? 'dark' : 'light');
+        }
+    });
+
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+    });
+
+    /* --- Calculator Logic --- */
+    const display = document.getElementById('display');
+    const historyDiv = document.getElementById('history');
+    let currentExpression = "";
+    let isResultDisplayed = false;
+
+    // Helper to update view
+    function updateDisplay(value) {
+        // Prevent overflow text issues by simple slicing if too long (optional)
+        if (value === "") display.innerText = "0";
+        else display.innerText = value;
+    }
+
+    function insert(value) {
+        if (isResultDisplayed) {
+            // If we just calculated, typing a number starts new, operator continues
+            if (!['+', '-', '*', '/', '%'].includes(value)) {
+                currentExpression = "";
+            }
+            isResultDisplayed = false;
+        }
+        
+        // Prevent multiple decimals in a single number segment would require complex regex
+        // Simple duplicate operator prevention
+        const lastChar = currentExpression.slice(-1);
+        if (['+', '-', '*', '/', '.'].includes(lastChar) && ['+', '-', '*', '/', '.'].includes(value)) {
+            // Replace last operator
+            currentExpression = currentExpression.slice(0, -1) + value;
+        } else {
+            currentExpression += value;
+        }
+        
+        updateDisplay(currentExpression);
+    }
+
+    function clearDisplay() {
+        currentExpression = "";
+        historyDiv.innerText = "";
+        isResultDisplayed = false;
+        updateDisplay("");
+    }
+
+    function deleteChar() {
+        if (isResultDisplayed) {
+            clearDisplay();
+            return;
+        }
+        currentExpression = currentExpression.toString().slice(0, -1);
+        updateDisplay(currentExpression);
+    }
+
+    function handleMath(func) {
+        if (isResultDisplayed) isResultDisplayed = false;
+        
+        switch(func) {
+            case 'sin': currentExpression += 'Math.sin('; break;
+            case 'cos': currentExpression += 'Math.cos('; break;
+            case 'tan': currentExpression += 'Math.tan('; break;
+            case 'log': currentExpression += 'Math.log10('; break;
+            case 'ln':  currentExpression += 'Math.log('; break;
+            case 'sqrt': currentExpression += 'Math.sqrt('; break;
+        }
+        updateDisplay(currentExpression.replace(/Math\./g, ''));
+    }
+
+    function factorial(n) {
+        if (n < 0) return NaN;
+        if (n === 0 || n === 1) return 1;
+        let result = 1; 
+        for (let i = 2; i <= n; i++) result *= i;
+        return result;
+    }
+
+    function calculate() {
+        try {
+            // Store history
+            historyDiv.innerText = currentExpression.replace(/Math\./g, '') + " =";
+            
+            // Prepare string for evaluation
+            // We need to be careful with 'eval'. 
+            // 1. Handle Factorial (! is not valid JS math operator in this context usually, 
+            //    but for simplicity we aren't supporting '!' button in this logic block directly unless parsed).
+            
+            let evalString = currentExpression;
+            
+            // Visual replacements
+            // Note: Users see 'sin(', internally we have 'Math.sin('
+            
+            // Evaluate
+            // Using Function constructor is slightly safer than eval(), but still requires sanitized input.
+            // For a pure client-side calculator, this is acceptable.
+            const result = new Function('return ' + evalString)();
+
+            // Format Result
+            let finalResult = parseFloat(result.toFixed(8)).toString(); // Remove trailing zeros
+            
+            currentExpression = finalResult;
+            updateDisplay(finalResult);
+            isResultDisplayed = true;
+        } catch (error) {
+            display.innerText = "Error";
+            currentExpression = "";
+            isResultDisplayed = true;
+        }
+    }
+
+    /* --- Keyboard Support --- */
+    document.addEventListener('keydown', (event) => {
+        const key = event.key;
+        
+        if (!isNaN(key) || key === '.') {
+            insert(key);
+        } else if (['+', '-', '*', '/'].includes(key)) {
+            insert(key);
+        } else if (key === 'Enter' || key === '=') {
+            event.preventDefault(); // Prevent form submission or button clicks
+            calculate();
+        } else if (key === 'Backspace') {
+            deleteChar();
+        } else if (key === 'Escape') {
+            clearDisplay();
+        } else if (key === '(' || key === ')') {
+            insert(key);
+        }
+    });
+</script>
+
+</body>
+</html>

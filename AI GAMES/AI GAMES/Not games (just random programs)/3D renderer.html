@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D UI Builder (Fixed)</title>
+    <style>
+        /* --- System Theme Detection --- */
+        :root {
+            --bg: #f4f6f8;
+            --panel: #ffffff;
+            --text: #2c3e50;
+            --border: #dfe3e8;
+            --input-bg: #f9fafb;
+            --accent: #3b82f6;
+            --danger: #ef4444;
+            --shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f172a;
+                --panel: #1e293b;
+                --text: #e2e8f0;
+                --border: #334155;
+                --input-bg: #0f172a;
+                --accent: #60a5fa;
+                --danger: #f87171;
+                --shadow: 0 4px 6px rgba(0,0,0,0.4);
+            }
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            gap: 20px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        /* --- Layout --- */
+        .controls-panel {
+            flex: 0 0 350px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow);
+            overflow-y: auto;
+            max-height: 100%;
+        }
+
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--panel);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* --- UI Elements --- */
+        .section {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h2, h3 { margin: 0 0 10px 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+        
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        label { font-size: 0.85rem; font-weight: 600; }
+
+        input[type="range"] { flex: 1; }
+        input[type="number"] {
+            width: 50px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        button:hover { opacity: 0.9; }
+        
+        button.danger { background: var(--danger); }
+        button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        button.icon { padding: 4px 8px; font-size: 12px; }
+
+        /* --- List Styles --- */
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .list-item {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            background: var(--input-bg);
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .index-badge {
+            font-size: 0.7rem;
+            opacity: 0.5;
+            width: 20px;
+        }
+
+        .coord-group {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .coord-label { font-size: 0.7rem; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+    <div class="controls-panel">
+        
+        <div class="section">
+            <h2>Camera & View</h2>
+            <div class="row">
+                <label>FOV</label>
+                <input type="range" min="200" max="1000" value="500" id="fovInput">
+            </div>
+            <div class="row">
+                <label>Distance</label>
+                <input type="range" min="2" max="10" step="0.1" value="4" id="distInput">
+            </div>
+            <div class="row">
+                <button class="secondary" onclick="toggleRotation()" style="width:100%">⏯ Play/Pause</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="row">
+                <h3>Vertices (Points)</h3>
+                <button onclick="addVertex()">+ Add Point</button>
+            </div>
+            <div id="vertexList" class="item-list"></div>
+        </div>
+
+        <div class="section">
+            <div class="row">
+                <h3>Edges (Lines)</h3>
+                <button onclick="addEdge()">+ Connect</button>
+            </div>
+            <p style="font-size:0.75rem; opacity:0.6; margin-top:-5px; margin-bottom:10px;">
+                Connect points by their Index number (#)
+            </p>
+            <div id="edgeList" class="item-list"></div>
+        </div>
+
+        <div class="section">
+            <button class="danger" onclick="clearAll()" style="width:100%">Clear All</button>
+            <div style="margin-top:10px; display:flex; gap:10px;">
+                <button class="secondary" onclick="loadShape('cube')" style="flex:1">Cube</button>
+                <button class="secondary" onclick="loadShape('pyramid')" style="flex:1">Pyramid</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="canvas-container" id="canvasWrap">
+        <canvas id="renderCanvas"></canvas>
+    </div>
+
+    <script>
+        // --- 1. Variable Setup ---
+        // We define all DOM elements FIRST to avoid crashes
+        const canvas = document.getElementById('renderCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvasWrap');
+        const vertexListEl = document.getElementById('vertexList');
+        const edgeListEl = document.getElementById('edgeList');
+        const fovInput = document.getElementById('fovInput');
+        const distInput = document.getElementById('distInput');
+
+        const state = {
+            fov: 500,
+            distance: 4,
+            rotating: true,
+            angleX: 0,
+            angleY: 0,
+            vertices: [],
+            edges: []
+        };
+
+        const presets = {
+            cube: {
+                vertices: [
+                    {x:-1,y:-1,z:-1}, {x:1,y:-1,z:-1}, {x:1,y:1,z:-1}, {x:-1,y:1,z:-1},
+                    {x:-1,y:-1,z:1}, {x:1,y:-1,z:1}, {x:1,y:1,z:1}, {x:-1,y:1,z:1}
+                ],
+                edges: [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]]
+            },
+            pyramid: {
+                vertices: [
+                    {x:0,y:-1,z:0}, {x:-1,y:1,z:-1}, {x:1,y:1,z:-1}, {x:1,y:1,z:1}, {x:-1,y:1,z:1}
+                ],
+                edges: [[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[4,1]]
+            }
+        };
+
+        // --- 2. Math & Rendering ---
+
+        // Resize canvas to fill the panel
+        function resize() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        function project(x, y, z) {
+            let depth = state.distance - z;
+            if (depth <= 0) depth = 0.01;
+            const scale = state.fov / depth;
+            return {
+                x: x * scale + (canvas.width / 2),
+                y: y * scale + (canvas.height / 2)
+            };
+        }
+
+        function rotate(v) {
+            // Rotate X
+            let y1 = v.y * Math.cos(state.angleX) - v.z * Math.sin(state.angleX);
+            let z1 = v.y * Math.sin(state.angleX) + v.z * Math.cos(state.angleX);
+            // Rotate Y
+            let x2 = v.x * Math.cos(state.angleY) - z1 * Math.sin(state.angleY);
+            let z2 = v.x * Math.sin(state.angleY) + z1 * Math.cos(state.angleY);
+            return { x: x2, y: y1, z: z2 };
+        }
+
+        function draw() {
+            // Render Loop
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const style = getComputedStyle(document.body);
+            ctx.strokeStyle = style.getPropertyValue('--text').trim();
+            ctx.fillStyle = style.getPropertyValue('--accent').trim();
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+
+            if (state.rotating) {
+                state.angleX += 0.01;
+                state.angleY += 0.015;
+            }
+
+            const projPoints = state.vertices.map(v => {
+                const r = rotate(v);
+                return project(r.x, r.y, r.z);
+            });
+
+            // Draw Lines
+            ctx.beginPath();
+            state.edges.forEach(edge => {
+                const p1 = projPoints[edge[0]];
+                const p2 = projPoints[edge[1]];
+                if (p1 && p2) {
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                }
+            });
+            ctx.stroke();
+
+            // Draw Dots & Numbers
+            projPoints.forEach((p, i) => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw ID number
+                ctx.save();
+                ctx.fillStyle = style.getPropertyValue('--text');
+                ctx.font = "12px sans-serif";
+                ctx.fillText(i, p.x + 8, p.y - 8);
+                ctx.restore();
+            });
+
+            requestAnimationFrame(draw);
+        }
+
+        // --- 3. UI Logic ---
+
+        function renderUI() {
+            // Render Vertices
+            vertexListEl.innerHTML = '';
+            state.vertices.forEach((v, i) => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <span class="index-badge">#${i}</span>
+                    <div class="coord-group"><span class="coord-label">X</span><input type="number" step="0.5" value="${v.x}" oninput="updateVertex(${i}, 'x', this.value)"></div>
+                    <div class="coord-group"><span class="coord-label">Y</span><input type="number" step="0.5" value="${v.y}" oninput="updateVertex(${i}, 'y', this.value)"></div>
+                    <div class="coord-group"><span class="coord-label">Z</span><input type="number" step="0.5" value="${v.z}" oninput="updateVertex(${i}, 'z', this.value)"></div>
+                    <button class="danger icon" onclick="removeVertex(${i})">×</button>
+                `;
+                vertexListEl.appendChild(div);
+            });
+
+            // Render Edges
+            edgeListEl.innerHTML = '';
+            state.edges.forEach((e, i) => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <span class="index-badge">#${i}</span>
+                    <div class="coord-group"><span class="coord-label">From</span><input type="number" min="0" max="${Math.max(0, state.vertices.length-1)}" value="${e[0]}" oninput="updateEdge(${i}, 0, this.value)"></div>
+                    <div class="coord-group"><span class="coord-label">To</span><input type="number" min="0" max="${Math.max(0, state.vertices.length-1)}" value="${e[1]}" oninput="updateEdge(${i}, 1, this.value)"></div>
+                    <button class="danger icon" onclick="removeEdge(${i})">×</button>
+                `;
+                edgeListEl.appendChild(div);
+            });
+        }
+
+        // --- 4. Global Functions (Window Scope) ---
+
+        window.updateVertex = function(index, axis, value) {
+            const val = parseFloat(value);
+            if (!isNaN(val)) state.vertices[index][axis] = val;
+        }
+
+        window.addVertex = function() {
+            state.vertices.push({x: 0, y: 0, z: 0});
+            renderUI();
+        }
+
+        window.removeVertex = function(index) {
+            state.vertices.splice(index, 1);
+            // Clean up edges that pointed to this dead vertex
+            state.edges = state.edges.filter(e => e[0] !== index && e[1] !== index);
+            // Shift remaining edge indices to match new array positions
+            state.edges = state.edges.map(e => [
+                e[0] > index ? e[0] - 1 : e[0],
+                e[1] > index ? e[1] - 1 : e[1]
+            ]);
+            renderUI();
+        }
+
+        window.addEdge = function() {
+            if (state.vertices.length < 2) return alert("You need at least 2 points to make a line.");
+            const last = state.vertices.length - 1;
+            state.edges.push([last-1, last]);
+            renderUI();
+        }
+
+        window.updateEdge = function(index, pos, value) {
+            const val = parseInt(value);
+            if (!isNaN(val)) state.edges[index][pos] = val;
+        }
+
+        window.removeEdge = function(index) {
+            state.edges.splice(index, 1);
+            renderUI();
+        }
+
+        window.clearAll = function() {
+            state.vertices = [];
+            state.edges = [];
+            renderUI();
+        }
+
+        window.loadShape = function(type) {
+            const data = JSON.parse(JSON.stringify(presets[type]));
+            state.vertices = data.vertices;
+            state.edges = data.edges;
+            state.angleX = 0;
+            state.angleY = 0;
+            renderUI();
+        }
+
+        window.toggleRotation = function() {
+            state.rotating = !state.rotating;
+        }
+
+        // --- 5. Event Listeners & Start ---
+
+        fovInput.addEventListener('input', e => state.fov = parseInt(e.target.value));
+        distInput.addEventListener('input', e => state.distance = parseFloat(e.target.value));
+
+        // Start everything now that all functions are defined
+        loadShape('cube');
+        draw();
+
+    </script>
+</body>
+</html>

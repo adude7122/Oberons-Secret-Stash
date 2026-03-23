@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Language Interpreter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .editor-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #333;
+        }
+        
+        .header {
+            background: #252526;
+            padding: 10px 15px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h2 {
+            font-size: 14px;
+            color: #ccc;
+        }
+        
+        .run-btn {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 13px;
+        }
+        
+        .run-btn:hover {
+            background: #1177bb;
+        }
+        
+        #code {
+            flex: 1;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: none;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            line-height: 1.5;
+        }
+        
+        .terminal-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #terminal {
+            flex: 1;
+            background: #0c0c0c;
+            color: #cccccc;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .output-line {
+            margin: 2px 0;
+        }
+        
+        .error {
+            color: #f48771;
+        }
+        
+        .input-line {
+            color: #4ec9b0;
+        }
+        
+        .docs {
+            background: #252526;
+            padding: 15px;
+            font-size: 12px;
+            border-top: 1px solid #333;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .docs h3 {
+            color: #4ec9b0;
+            margin-bottom: 10px;
+        }
+        
+        .docs code {
+            background: #1e1e1e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #ce9178;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="editor-section">
+            <div class="header">
+                <h2>Code Editor</h2>
+                <button class="run-btn" onclick="runCode()">Run ▶</button>
+            </div>
+            <textarea id="code" spellcheck="false">// Load the math library
+import "math"
+
+function greet
+    print "=== Advanced Calculator ==="
+end
+
+function calculate
+    print "Enter first number:"
+    input num1
+    print "Enter operator (+, -, *, /, pow, sqrt, abs):"
+    input op
+    
+    if op == "sqrt"
+        result = math.sqrt(num1)
+        print "Result: " + result
+    elseif op == "abs"
+        result = math.abs(num1)
+        print "Result: " + result
+    else
+        print "Enter second number:"
+        input num2
+        
+        if op == "+"
+            result = num1 + num2
+            print "Result: " + result
+        elseif op == "-"
+            result = num1 - num2
+            print "Result: " + result
+        elseif op == "*"
+            result = num1 * num2
+            print "Result: " + result
+        elseif op == "/"
+            result = num1 / num2
+            print "Result: " + result
+        elseif op == "pow"
+            result = math.pow(num1, num2)
+            print "Result: " + result
+        else
+            print "Invalid operator!"
+        end
+    end
+end
+
+call greet
+running = "yes"
+
+while running == "yes"
+    call calculate
+    print "Continue? (yes/no)"
+    input running
+end
+
+print "Thanks for using the calculator!"</textarea>
+            <div class="docs">
+                <h3>Language Guide</h3>
+                <p><code>import "libraryName"</code> - Load a library</p>
+                <p><code>print "text"</code> - Output text</p>
+                <p><code>input varName</code> - Get user input and store in variable</p>
+                <p><code>varName = expression</code> - Assign value to variable</p>
+                <p><code>if condition ... elseif condition ... else ... end</code> - Conditionals</p>
+                <p><code>while condition ... end</code> - Loop while condition is true</p>
+                <p><code>break</code> - Exit current loop</p>
+                <p><code>function name ... end</code> - Define a function</p>
+                <p><code>call name</code> - Call a function</p>
+                <p>Math: +, -, *, / | Comparison: ==, !=, >, <, >=, <=</p>
+                <p><strong>Libraries:</strong> math (pow, sqrt, abs, sin, cos, tan, floor, ceil, round)</p>
+            </div>
+        </div>
+        
+        <div class="terminal-section">
+            <div class="header">
+                <h2>Terminal Output</h2>
+            </div>
+            <div id="terminal"></div>
+        </div>
+    </div>
+
+    <script>
+        let variables = {};
+        let functions = {};
+        let libraries = {};
+        let terminal;
+
+        // Built-in libraries
+        const builtinLibraries = {
+            math: {
+                pow: (a, b) => Math.pow(parseFloat(a), parseFloat(b)),
+                sqrt: (a) => Math.sqrt(parseFloat(a)),
+                abs: (a) => Math.abs(parseFloat(a)),
+                sin: (a) => Math.sin(parseFloat(a)),
+                cos: (a) => Math.cos(parseFloat(a)),
+                tan: (a) => Math.tan(parseFloat(a)),
+                floor: (a) => Math.floor(parseFloat(a)),
+                ceil: (a) => Math.ceil(parseFloat(a)),
+                round: (a) => Math.round(parseFloat(a)),
+                min: (a, b) => Math.min(parseFloat(a), parseFloat(b)),
+                max: (a, b) => Math.max(parseFloat(a), parseFloat(b)),
+                random: () => Math.random(),
+                pi: Math.PI,
+                e: Math.E
+            }
+        };
+
+        function clearTerminal() {
+            terminal = document.getElementById('terminal');
+            terminal.innerHTML = '';
+            variables = {};
+            functions = {};
+            libraries = {};
+        }
+
+        function output(text, className = '') {
+            const line = document.createElement('div');
+            line.className = 'output-line ' + className;
+            line.textContent = text;
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function waitForInput(varName) {
+            return new Promise((resolve) => {
+                output('> ', 'input-line');
+                const input = document.createElement('input');
+                input.style.cssText = 'background: transparent; border: none; color: #4ec9b0; font-family: inherit; font-size: 13px; outline: none; width: 90%;';
+                terminal.appendChild(input);
+                input.focus();
+                
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        const value = input.value;
+                        input.disabled = true;
+                        variables[varName] = value;
+                        resolve(value);
+                    }
+                });
+            });
+        }
+
+        function evaluateExpression(expr, forceString = false) {
+            expr = String(expr).trim();
+            
+            if (expr.startsWith('"') && expr.endsWith('"')) {
+                return expr.slice(1, -1);
+            }
+            
+            // Check for library function calls (e.g., math.sqrt(num))
+            if (expr.includes('.') && expr.includes('(')) {
+                const match = expr.match(/(\w+)\.(\w+)\((.*)\)/);
+                if (match) {
+                    const [, libName, funcName, argsStr] = match;
+                    if (libraries[libName] && libraries[libName][funcName]) {
+                        const args = argsStr.split(',').map(arg => evaluateExpression(arg.trim()));
+                        return libraries[libName][funcName](...args);
+                    }
+                }
+            }
+            
+            // Check for library properties (e.g., math.pi)
+            if (expr.includes('.')) {
+                const parts = expr.split('.');
+                if (parts.length === 2) {
+                    const [libName, propName] = parts;
+                    if (libraries[libName] && libraries[libName][propName] !== undefined) {
+                        return libraries[libName][propName];
+                    }
+                }
+            }
+            
+            if (variables.hasOwnProperty(expr)) {
+                return variables[expr];
+            }
+            
+            if (!isNaN(expr)) {
+                return forceString ? expr : parseFloat(expr);
+            }
+            
+            if (!forceString) {
+                if (expr.includes('/')) {
+                    const parts = expr.split('/').map(p => evaluateExpression(p.trim()));
+                    return parts.reduce((a, b) => parseFloat(a) / parseFloat(b));
+                }
+                if (expr.includes('*')) {
+                    const parts = expr.split('*').map(p => evaluateExpression(p.trim()));
+                    return parts.reduce((a, b) => parseFloat(a) * parseFloat(b));
+                }
+                if (expr.includes('+')) {
+                    const parts = expr.split('+').map(p => p.trim());
+                    if (parts.some(p => p.startsWith('"'))) {
+                        return parts.map(p => evaluateExpression(p, true)).join('');
+                    }
+                    return parts.reduce((a, b) => parseFloat(evaluateExpression(a)) + parseFloat(evaluateExpression(b)), 0);
+                }
+                if (expr.includes('-') && !expr.startsWith('-')) {
+                    const parts = expr.split('-').map(p => evaluateExpression(p.trim()));
+                    return parts.reduce((a, b) => parseFloat(a) - parseFloat(b));
+                }
+            } else {
+                if (expr.includes('+')) {
+                    const parts = expr.split('+').map(p => p.trim());
+                    return parts.map(p => evaluateExpression(p, true)).join('');
+                }
+            }
+            
+            return expr;
+        }
+
+        function evaluateCondition(condition) {
+            const operators = ['==', '!=', '>=', '<=', '>', '<'];
+            let op = null;
+            let parts = [];
+            
+            for (let operator of operators) {
+                if (condition.includes(operator)) {
+                    op = operator;
+                    parts = condition.split(operator).map(p => p.trim());
+                    break;
+                }
+            }
+            
+            if (!op) return false;
+            
+            let left = evaluateExpression(parts[0]);
+            let right = evaluateExpression(parts[1]);
+            
+            const leftNum = parseFloat(left);
+            const rightNum = parseFloat(right);
+            
+            if (!isNaN(leftNum) && !isNaN(rightNum)) {
+                left = leftNum;
+                right = rightNum;
+            }
+            
+            switch(op) {
+                case '==': return left == right;
+                case '!=': return left != right;
+                case '>': return left > right;
+                case '<': return left < right;
+                case '>=': return left >= right;
+                case '<=': return left <= right;
+            }
+            
+            return false;
+        }
+
+        async function executeBlock(codeLines) {
+            let i = 0;
+            let skipMode = false;
+            let loopStack = [];
+            let shouldBreak = false;
+            let ifSatisfied = false; // Track if any if/elseif has been satisfied
+            
+            while (i < codeLines.length) {
+                const trimmed = codeLines[i];
+                
+                if (trimmed === 'end') {
+                    if (loopStack.length > 0 && !skipMode) {
+                        const loop = loopStack[loopStack.length - 1];
+                        if (evaluateCondition(loop.condition) && !shouldBreak) {
+                            i = loop.start;
+                            continue;
+                        } else {
+                            loopStack.pop();
+                            shouldBreak = false;
+                        }
+                    }
+                    skipMode = false;
+                    ifSatisfied = false;
+                    i++;
+                    continue;
+                }
+                
+                // Else
+                if (trimmed === 'else') {
+                    if (ifSatisfied) {
+                        skipMode = true;
+                    } else {
+                        skipMode = false;
+                        ifSatisfied = true;
+                    }
+                    i++;
+                    continue;
+                }
+                
+                // Elseif
+                if (trimmed.startsWith('elseif ')) {
+                    if (ifSatisfied) {
+                        skipMode = true;
+                    } else {
+                        const condition = trimmed.substring(7).trim();
+                        if (evaluateCondition(condition)) {
+                            skipMode = false;
+                            ifSatisfied = true;
+                        } else {
+                            skipMode = true;
+                        }
+                    }
+                    i++;
+                    continue;
+                }
+                
+                if (skipMode && !trimmed.startsWith('end') && trimmed !== 'else' && !trimmed.startsWith('elseif')) {
+                    i++;
+                    continue;
+                }
+                
+                // Break
+                if (trimmed === 'break') {
+                    shouldBreak = true;
+                    let depth = 1;
+                    i++;
+                    while (i < codeLines.length && depth > 0) {
+                        const nextLine = codeLines[i];
+                        if (nextLine.startsWith('while') || nextLine.startsWith('if')) depth++;
+                        if (nextLine === 'end') depth--;
+                        i++;
+                    }
+                    if (loopStack.length > 0) {
+                        loopStack.pop();
+                    }
+                    shouldBreak = false;
+                    ifSatisfied = false;
+                    continue;
+                }
+                
+                // Call
+                if (trimmed.startsWith('call ')) {
+                    const funcName = trimmed.substring(5).trim();
+                    if (functions[funcName]) {
+                        await executeBlock(functions[funcName]);
+                    } else {
+                        output('Error: Function "' + funcName + '" not defined', 'error');
+                    }
+                    i++;
+                    continue;
+                }
+                
+                // Import
+                if (trimmed.startsWith('import ')) {
+                    const libName = trimmed.substring(7).trim().replace(/"/g, '');
+                    if (builtinLibraries[libName]) {
+                        libraries[libName] = builtinLibraries[libName];
+                        output('Loaded library: ' + libName, 'input-line');
+                    } else {
+                        output('Error: Library "' + libName + '" not found', 'error');
+                    }
+                    i++;
+                    continue;
+                }
+                
+                // Print
+                if (trimmed.startsWith('print ')) {
+                    const expr = trimmed.substring(6);
+                    const result = evaluateExpression(expr, true);
+                    output(result);
+                    i++;
+                    continue;
+                }
+                
+                // Input
+                if (trimmed.startsWith('input ')) {
+                    const varName = trimmed.substring(6).trim();
+                    await waitForInput(varName);
+                    i++;
+                    continue;
+                }
+                
+                // Assignment
+                if (trimmed.includes('=') && !trimmed.startsWith('if') && !trimmed.startsWith('while') && !trimmed.startsWith('elseif')) {
+                    const parts = trimmed.split('=');
+                    const varName = parts[0].trim();
+                    const expr = parts[1].trim();
+                    variables[varName] = evaluateExpression(expr);
+                    i++;
+                    continue;
+                }
+                
+                // While
+                if (trimmed.startsWith('while ')) {
+                    const condition = trimmed.substring(6).trim();
+                    if (evaluateCondition(condition)) {
+                        loopStack.push({ start: i, condition: condition });
+                    } else {
+                        let depth = 1;
+                        i++;
+                        while (i < codeLines.length && depth > 0) {
+                            const nextLine = codeLines[i];
+                            if (nextLine.startsWith('while') || nextLine.startsWith('if')) depth++;
+                            if (nextLine === 'end') depth--;
+                            i++;
+                        }
+                        continue;
+                    }
+                    i++;
+                    continue;
+                }
+                
+                // If
+                if (trimmed.startsWith('if ')) {
+                    const condition = trimmed.substring(3).trim();
+                    if (evaluateCondition(condition)) {
+                        ifSatisfied = true;
+                        skipMode = false;
+                    } else {
+                        ifSatisfied = false;
+                        skipMode = true;
+                    }
+                    i++;
+                    continue;
+                }
+                
+                i++;
+            }
+        }
+
+        async function runCode() {
+            clearTerminal();
+            const code = document.getElementById('code').value;
+            const lines = code.split('\n').map(l => l.trim());
+            
+            try {
+                // First pass: collect function definitions
+                let i = 0;
+                while (i < lines.length) {
+                    const trimmed = lines[i];
+                    if (trimmed.startsWith('function ')) {
+                        const funcName = trimmed.substring(9).trim();
+                        const functionBody = [];
+                        i++;
+                        while (i < lines.length && lines[i] !== 'end') {
+                            functionBody.push(lines[i]);
+                            i++;
+                        }
+                        functions[funcName] = functionBody;
+                    }
+                    i++;
+                }
+                
+                // Second pass: execute main code (skip function definitions)
+                const mainCode = [];
+                i = 0;
+                while (i < lines.length) {
+                    const trimmed = lines[i];
+                    if (trimmed.startsWith('function ')) {
+                        // Skip until matching end
+                        i++;
+                        while (i < lines.length && lines[i] !== 'end') {
+                            i++;
+                        }
+                        i++; // Skip the 'end'
+                        continue;
+                    }
+                    mainCode.push(trimmed);
+                    i++;
+                }
+                
+                await executeBlock(mainCode);
+                
+                output('\n--- Program finished ---', 'input-line');
+            } catch (error) {
+                output('Error: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
